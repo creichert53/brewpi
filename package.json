@@ -3,7 +3,7 @@
   "description": "App created with create-react-app and utilizing an express backend with material-ui frontend.",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:3001",
+  "proxy": "http://localhost",
   "scripts": {
     "start": "node server/server.js",
     "start-dev": "concurrently \"npm run server\" \"npm run client\"",
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "ajv": "^6.3.0",
+    "axios": "^0.18.0",
     "bacstack": "0.0.1-beta.13",
     "express": "^4.16.3",
     "helmet": "^3.12.0",
@@ -24,9 +25,15 @@
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-helmet": "^5.2.0",
+    "react-redux": "^5.0.7",
     "react-router": "^4.2.0",
     "react-router-dom": "^4.2.2",
-    "react-scripts": "1.1.1"
+    "react-scripts": "1.1.1",
+    "redux": "^3.7.2",
+    "redux-socket.io": "^1.4.0",
+    "socket.io": "^2.1.0",
+    "socket.io-client": "^2.1.0",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "concurrently": "^3.5.1"
