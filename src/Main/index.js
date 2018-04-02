@@ -150,6 +150,7 @@ class ResponsiveDrawer extends React.Component {
 
   handleFile = (selectorFiles: FileList) => {
     const file = selectorFiles[0]
+    const that = this
     if (file) {
       var reader = new FileReader();
       reader.readAsText(file, 'UTF-8');
@@ -181,6 +182,7 @@ class ResponsiveDrawer extends React.Component {
             }
           })
 
+          console.log(`${that.props.theme.apiHost}/recipe`)
           axios.post('/recipe', r).then(res => {
             console.log(res)
           }).catch(err => {

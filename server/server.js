@@ -12,8 +12,8 @@ app.use(express.static(path.resolve(path.join(__dirname, '../', 'build'))))
 app.use(helmet())
 app.use(bodyParser.json())
 
-const server = http.createServer(app)
-const io = socket(server)
+const httpServer = http.createServer(app)
+const io = socket(httpServer)
 
 app.get('/ping', function (req, res) {
  return res.send('pong')
@@ -25,11 +25,12 @@ app.post('/recipe', (req, res) => {
 })
 
 app.get('/', function (req, res) {
+  console.log('Hello world')
   res.sendFile(path.resolve(path.join(__dirname, '../', 'build', 'index.html')))
 })
 
-server.listen(port, () => {
-  console.log(`Server is listening on port ${port}`)
+httpServer.listen(port, () => {
+  console.log(`HTTP Server is listening on port ${port}`)
 })
 
 io.on('connection', function (socket) {

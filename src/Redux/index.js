@@ -1,8 +1,9 @@
 import { createStore, applyMiddleware, combineReducers, compose } from 'redux'
 import createSocketIoMiddleware from 'redux-socket.io'
 import io from 'socket.io-client'
+import url from 'url'
 
-let socket = io('http://localhost:3000');
+let socket = io(`http://${url.parse(window.location.href).host}`);
 let socketIoMiddleware = createSocketIoMiddleware(socket, 'server/')
 
 // REDUCERS
