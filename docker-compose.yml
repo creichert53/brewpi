@@ -1,10 +1,6 @@
 version: '2'
 services:
-  rethinkdb:
-    build: ./rethinkdb
-    privileged: true
-    restart: always
+  mongodb:
+    image: mongo
     ports:
-      - "8080"
-      - "28015"
-      - "29015"
+      - "27017:27017"
