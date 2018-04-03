@@ -4,9 +4,11 @@
 # Note the node:slim image doesn't have node-gyp
 FROM resin/raspberrypi3-node:6-slim
 
-RUN -c 'echo "CONF_SWAPSIZE=2048" > /etc/dphys-swapfile'
-RUN dphys-swapfile setup
-RUN dphys-swapfile swapon
+RUN sudo apt-get install g++ protobuf-compiler libprotobuf-dev \
+    libboost-dev curl m4 wget libssl-dev
+RUN wget https://download.rethinkdb.com/dist/rethinkdb-2.3.6.tgz
+RUN tar xf rethinkdb-2.3.6.tgz
+RUN cd rethinkdb-2.3.6
 
 # Install RethinkDB.
 # RUN sudo apt-get install g++ protobuf-compiler libprotobuf-dev \
