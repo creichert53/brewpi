@@ -4,32 +4,30 @@
 # Note the node:slim image doesn't have node-gyp
 FROM resin/raspberrypi3-node:6-slim
 
-# use apt-get if you need to install dependencies,
-RUN apt-get update
+# Install RethinkDB.
+RUN \
+  echo "deb http://download.rethinkdb.com/apt `lsb_release -cs` main" > /etc/apt/sources.list.d/rethinkdb.list && \
+  wget -O- http://download.rethinkdb.com/apt/pubkey.gpg | apt-key add - && \
+  apt-get update && \
+  apt-get install -y rethinkdb python-pip && \
+  rm -rf /var/lib/apt/lists/*
 
-# double swapspace
-RUN dd if=/dev/zero of=/swapfile bs=1M count=2048
-RUN chmod 600 /swapfile
-RUN mkswap /swapfile
-RUN swapon /swapfile
+# Install python driver for rethinkdb
+RUN pip install rethinkdb
 
-# install rethinkdb
-RUN sudo apt-get install g++ protobuf-compiler libprotobuf-dev libboost-dev curl m4 wget libssl-dev
-RUN wget https://download.rethinkdb.com/dist/rethinkdb-2.3.6.tgz
-RUN tar xf rethinkdb-2.3.6.tgz
-RUN cd rethinkdb-2.3.6
-RUN ./configure --with-system-malloc --allow-fetch
-RUN make ALLOW_WARNINGS=1
-RUN sudo make install ALLOW_WARNINGS=1
+# Define mountable directories.
+VOLUME ["/data"]
 
-# Defines our working directory in container
-WORKDIR /usr/src/rethinkdb
+# Define working directory.
+WORKDIR /data
 
-# This will copy all files in our root to the working directory in the container
-COPY . ./
+# Define default command.
+CMD ["rethinkdb", "--bind", "all"]
 
-# Enable systemd init system in container
-ENV INITSYSTEM on
-
-# server.js will run when container starts up on the device
-#CMD ["npm", "start"]
+# Expose ports.
+#   - 8080: web UI
+#   - 28015: process
+#   - 29015: cluster
+EXPOSE 8080
+EXPOSE 28015
+EXPOSE 29015
