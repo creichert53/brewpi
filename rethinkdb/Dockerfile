@@ -8,7 +8,6 @@ FROM resin/raspberrypi3-node:6-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		python \
 		build-essential \
-		rethinkdb \
 	&& rm -rf /var/lib/apt/lists/*
 
 
