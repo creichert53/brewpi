@@ -7,6 +7,11 @@ FROM resin/raspberrypi3-node:6-slim
 # use apt-get if you need to install dependencies,
 RUN apt-get update
 
+# double swapspace
+RUN dd if=/dev/zero of=/swapfile bs=1M count=2048
+RUN chmod 600 /swapfile
+RUN mkswap /swapfile
+
 # install rethinkdb
 RUN sudo apt-get install g++ protobuf-compiler libprotobuf-dev libboost-dev curl m4 wget libssl-dev
 RUN wget https://download.rethinkdb.com/dist/rethinkdb-2.3.6.tgz
