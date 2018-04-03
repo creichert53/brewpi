@@ -4,6 +4,10 @@ RUN apt-get update && apt-get install g++ protobuf-compiler libprotobuf-dev libb
 
 RUN wget https://download.rethinkdb.com/dist/rethinkdb-2.3.6.tgz && tar xf rethinkdb-2.3.6.tgz && cd rethinkdb-2.3.6 && ./configure --with-system-malloc --allow-fetch && make ALLOW_WARNINGS=1 && make install ALLOW_WARNINGS=1
 
+VOLUME ["/data"]
+
+WORKDIR /data
+
 CMD ["rethinkdb", "--bind", "all"]
 
 EXPOSE 28015 29015 8080
