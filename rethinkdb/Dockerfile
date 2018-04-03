@@ -1,26 +1,23 @@
-# base-image for node on any machine using a template variable,
-# see more about dockerfile templates here: http://docs.resin.io/deployment/docker-templates/
-# and about resin base images here: http://docs.resin.io/runtime/resin-base-images/
-# Note the node:slim image doesn't have node-gyp
-# Parent Dockerfile https://github.com/docker-library/mongo/blob/982328582c74dd2f0a9c8c77b84006f291f974c3/3.0/Dockerfile
-FROM mongo:latest
+FROM debian:jessie
 
-# Modify child mongo to use /data/db2 as dbpath (because /data/db wont persist the build)
-RUN mkdir -p /data/db2 \
-    && echo "dbpath = /data/db2" > /etc/mongodb.conf \
-    && chown -R mongodb:mongodb /data/db2
+MAINTAINER Daniel Alan Miller <dalanmiller@rethinkdb.com>
 
-COPY . /data/db2
+# Add the RethinkDB repository and public key
+# "RethinkDB Packaging <packaging@rethinkdb.com>" http://download.rethinkdb.com/apt/pubkey.gpg
+RUN apt-key adv --keyserver keys.gnupg.net --recv-keys 3B87619DF812A63A8C1005C30742918E5C8DA04A
+RUN echo "deb http://download.rethinkdb.com/apt jessie main" > /etc/apt/sources.list.d/rethinkdb.list
 
-RUN mongod --fork --logpath /var/log/mongodb.log --dbpath /data/db2 --smallfiles \
-    && CREATE_FILES=/data/db2/scripts/*-create.js \
-    && for f in $CREATE_FILES; do mongo 127.0.0.1:27017 $f; done \
-    && INSERT_FILES=/data/db2/scripts/*-insert.js \
-    && for f in $INSERT_FILES; do mongo 127.0.0.1:27017 $f; done \
-    && mongod --dbpath /data/db2 --shutdown \
-    && chown -R mongodb /data/db2
+ENV RETHINKDB_PACKAGE_VERSION 2.3.6~0jessie
 
-# Make the new dir a VOLUME to persists it
-VOLUME /data/db2
+RUN apt-get update \
+	&& apt-get install -y rethinkdb=$RETHINKDB_PACKAGE_VERSION \
+	&& rm -rf /var/lib/apt/lists/*
 
-CMD ["mongod", "--config", "/etc/mongodb.conf", "--smallfiles"]
+VOLUME ["/data"]
+
+WORKDIR /data
+
+CMD ["rethinkdb", "--bind", "all"]
+
+#   process cluster webui
+EXPOSE 28015 29015 8080
