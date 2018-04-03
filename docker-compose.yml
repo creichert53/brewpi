@@ -14,3 +14,6 @@ services:
     restart: always
     depends_on:
       - rethinkdb
+    ports:
+      - "80"
+      - "443"
