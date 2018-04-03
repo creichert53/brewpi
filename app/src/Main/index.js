@@ -1,7 +1,7 @@
+/** REACT-REDUX **/
 import React from 'react'
 import PropTypes from 'prop-types'
-
-import axios from 'axios'
+import { connect } from 'react-redux'
 
 /** MATERIAL-UI **/
 import { withStyles } from 'material-ui/styles'
@@ -27,6 +27,7 @@ import xml2js, { parseString } from 'xml2js'
 import { Route, withRouter } from 'react-router-dom'
 
 import Home from '../Home'
+import { newRecipe } from '../Redux/actions'
 
 const styles = theme => ({
   root: {
@@ -182,12 +183,7 @@ class ResponsiveDrawer extends React.Component {
             }
           })
 
-          console.log(`${that.props.theme.apiHost}/recipe`)
-          axios.post('/recipe', r).then(res => {
-            console.log(res)
-          }).catch(err => {
-            console.log(err)
-          })
+          that.props.newRecipe(r)
         })
       }
       reader.onerror = function (evt) {
@@ -328,4 +324,6 @@ ResponsiveDrawer.propTypes = {
   theme: PropTypes.object.isRequired,
 }
 
-export default withStyles(styles, { withTheme: true })(withRouter(ResponsiveDrawer))
+export default withStyles(styles, { withTheme: true })(withRouter(connect(null, {
+  newRecipe
+})(ResponsiveDrawer)))

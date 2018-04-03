@@ -1,32 +1,25 @@
 import { createStore, applyMiddleware, combineReducers, compose } from 'redux'
 import createSocketIoMiddleware from 'redux-socket.io'
+import thunk from 'redux-thunk'
 import io from 'socket.io-client'
 import url from 'url'
 
-let socket = io(`https://${url.parse(window.location.href).host}`);
+// IMPORT REDUCERS
+import recipeReducer from './reducers/recipeReducer'
+
+// CREATE SOCKET-IO MIDDLEWARE
+const urlObj = url.parse(window.location.href)
+let socket = io(`${urlObj.protocol}//${urlObj.host}`);
 let socketIoMiddleware = createSocketIoMiddleware(socket, 'server/')
 
 // REDUCERS
-const recipeReducer = (state = {
-  message: 'blank'
-}, action) => {
-  switch(action.type){
-    case 'message':
-      return {
-        ...state,
-        message: action.payload
-      };
-    default:
-      return state;
-  }
-}
 const reducers = combineReducers({
-  recipeReducer
+  recipe: recipeReducer
 })
 
 // MIDDLEWARE
 const enhancers = compose(
-  applyMiddleware(socketIoMiddleware),
+  applyMiddleware(socketIoMiddleware, thunk),
   window.devToolsExtension ? window.devToolsExtension() : f => f
 )
 
@@ -35,7 +28,5 @@ const store = createStore(reducers, enhancers)
 store.subscribe(()=>{
   console.log('new client state', store.getState());
 })
-
-store.dispatch({type:'server/hello', payload:'Hello!'})
 
 export default store

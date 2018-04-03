@@ -1,0 +1,17 @@
+version: '2'
+services:
+  app:
+    build: ./app
+    privileged: true
+    restart: always
+    depends_on:
+      - rethinkdb
+    expose:
+      - "80"
+      - "443"
+  rethinkdb:
+    image: rethinkdb
+    ports:
+      - "8080"
+      - "28015"
+      - "29015"

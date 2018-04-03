@@ -1,9 +1,11 @@
 import { createMuiTheme } from 'material-ui/styles'
 import url from 'url'
 
+const urlObj = url.parse(window.location.href)
+console.log(`${urlObj.protocol}//${urlObj.host}`)
 const muiTheme = createMuiTheme({
   drawerWidth: 300,
-  apiHost: `https://${url.parse(window.location.href).host}`,
+  apiHost: `${urlObj.protocol}//${urlObj.host}`,
   typography: {
     fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
     titleFont: {
