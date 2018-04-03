@@ -5,8 +5,6 @@
 FROM resin/raspberrypi3-node:6-slim
 
 # use apt-get if you need to install dependencies,
-RUN apt-get update && apt-get install g++ protobuf-compiler libprotobuf-dev libboost-dev curl m4 wget libssl-dev
-RUN wget https://download.rethinkdb.com/dist/rethinkdb-2.3.6.tgz && tar xf rethinkdb-2.3.6.tgz && cd rethinkdb-2.3.6 && ./configure --with-system-malloc --allow-fetch && make ALLOW_WARNINGS=1 && make install ALLOW_WARNINGS=1
 
 # Defines our working directory in container
 WORKDIR /usr/src/app
