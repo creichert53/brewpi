@@ -5,6 +5,7 @@
 FROM resin/raspberrypi3-node:6-slim
 
 # use apt-get if you need to install dependencies,
+RUN apt-get update && apt-get install g++ protobuf-compiler libprotobuf-dev libboost-dev curl m4 wget libssl-dev
 
 # Defines our working directory in container
 WORKDIR /usr/src/app
