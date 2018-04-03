@@ -11,6 +11,7 @@ RUN apt-get update
 RUN dd if=/dev/zero of=/swapfile bs=1M count=2048
 RUN chmod 600 /swapfile
 RUN mkswap /swapfile
+RUN swapon /swapfile
 
 # install rethinkdb
 RUN sudo apt-get install g++ protobuf-compiler libprotobuf-dev libboost-dev curl m4 wget libssl-dev
