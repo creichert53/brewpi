@@ -8,9 +8,13 @@ FROM resin/raspberrypi3-node:6-slim
 RUN apt-get update
 
 # install rethinkdb
-RUN echo "deb http://download.rethinkdb.com/apt `lsb_release -cs` main" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
-RUN wget -qO- https://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
-RUN apt-get install rethinkdb
+RUN sudo apt-get install g++ protobuf-compiler libprotobuf-dev libboost-dev curl m4 wget libssl-dev
+RUN wget https://download.rethinkdb.com/dist/rethinkdb-2.3.6.tgz
+RUN tar xf rethinkdb-2.3.6.tgz
+RUN cd rethinkdb-2.3.6
+RUN ./configure --with-system-malloc --allow-fetch
+RUN make ALLOW_WARNINGS=1
+RUN sudo make install ALLOW_WARNINGS=1
 
 # Defines our working directory in container
 WORKDIR /usr/src/rethinkdb
