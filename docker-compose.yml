@@ -4,9 +4,16 @@ services:
     build: ./app
     privileged: true
     restart: always
+    depends_on:
+      - rethinkdb
     expose:
       - "80"
       - "443"
+  rethinkdb:
+    build: ./rethinkdb
+    privileged: true
+    restart: always
+    ports:
       - "8080"
       - "28015"
       - "29015"
