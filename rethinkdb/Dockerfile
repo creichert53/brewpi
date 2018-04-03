@@ -4,7 +4,7 @@
 # Note the node:slim image doesn't have node-gyp
 FROM resin/raspberrypi3-node:6-slim
 
-RUN apt-get install g++ protobuf-compiler libprotobuf-dev \
+RUN apt-get update && apt-get install g++ protobuf-compiler libprotobuf-dev \
     libboost-dev curl m4 wget libssl-dev
 RUN wget https://download.rethinkdb.com/dist/rethinkdb-2.3.6.tgz
 RUN tar xf rethinkdb-2.3.6.tgz
