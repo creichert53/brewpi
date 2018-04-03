@@ -5,13 +5,11 @@
 FROM resin/raspberrypi3-node:6-slim
 
 # use apt-get if you need to install dependencies,
-RUN apt-get update && apt-get install -y python
-RUN apt-get update && apt-get install g++ protobuf-compiler libprotobuf-dev libboost-dev curl m4 wget libssl-dev
+RUN apt-get update
 
 # install rethinkdb
 RUN echo "deb http://download.rethinkdb.com/apt `lsb_release -cs` main" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
 RUN wget -qO- https://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
-RUN sudo apt-get update
 RUN apt-get install rethinkdb
 
 # Defines our working directory in container
