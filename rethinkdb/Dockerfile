@@ -5,12 +5,13 @@
 FROM resin/raspberrypi3-node:6-slim
 
 # Install RethinkDB.
-RUN \
-  echo "deb http://download.rethinkdb.com/apt `lsb_release -cs` main" > /etc/apt/sources.list.d/rethinkdb.list && \
-  wget -O- http://download.rethinkdb.com/apt/pubkey.gpg | apt-key add - && \
-  apt-get update && \
-  apt-get install -y rethinkdb python-pip && \
-  rm -rf /var/lib/apt/lists/*
+RUN sudo apt-get install g++ protobuf-compiler libprotobuf-dev libboost-dev curl m4 wget libssl-dev
+RUN wget https://download.rethinkdb.com/dist/rethinkdb-2.3.6.tgz
+RUN tar xf rethinkdb-2.3.6.tgz
+RUN cd rethinkdb-2.3.6
+RUN ./configure --with-system-malloc --allow-fetch
+RUN make ALLOW_WARNINGS=1
+RUN sudo make install ALLOW_WARNINGS=1
 
 # Install python driver for rethinkdb
 RUN pip install rethinkdb
