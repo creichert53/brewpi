@@ -14,6 +14,3 @@ services:
     restart: always
     depends_on:
       - rethinkdb
-    expose:
-      - "80"
-      - "443"
