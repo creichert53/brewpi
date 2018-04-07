@@ -20,7 +20,7 @@ const httpServer = httpProxy.createServer({
 const io = socket(httpServer)
 
 app.get('/store', (req, res) => {
-
+  console.log(req.body)
 })
 
 // Serve static bundle
