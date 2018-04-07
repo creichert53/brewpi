@@ -3,6 +3,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
+/** REACT-ROUTER **/
+import { Route, withRouter } from 'react-router-dom'
+
 /** MATERIAL-UI **/
 import { withStyles } from 'material-ui/styles'
 import Drawer from 'material-ui/Drawer'
@@ -23,8 +26,6 @@ import FileUpload from 'material-ui-icons/FileUpload'
 import classnames from 'classnames'
 
 import xml2js, { parseString } from 'xml2js'
-
-import { Route, withRouter } from 'react-router-dom'
 
 import Home from '../Home'
 import { newRecipe } from '../Redux/actions'
