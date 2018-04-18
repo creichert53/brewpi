@@ -1,61 +1,235 @@
 import React from 'react'
-import PropTypes from 'prop-types';
-import { withStyles } from 'material-ui/styles';
-import Card, { CardActions, CardContent } from 'material-ui/Card';
-import Button from 'material-ui/Button';
-import Typography from 'material-ui/Typography';
+import { connect } from 'react-redux'
 
-const styles = {
+import PropTypes from 'prop-types'
+import { withStyles } from 'material-ui/styles'
+import Card, { CardActions, CardContent } from 'material-ui/Card'
+import Button from 'material-ui/Button'
+import Divider from 'material-ui/Divider'
+import Icon from 'material-ui/Icon'
+import Typography from 'material-ui/Typography'
+import Grid from 'material-ui/Grid'
+import List, {
+  ListItem,
+  ListItemIcon,
+  ListItemSecondaryAction,
+  ListItemText,
+  ListSubheader,
+} from 'material-ui/List'
+import EventNoteIcon from '@material-ui/icons/EventNote'
+import PersonIcon from '@material-ui/icons/Person'
+import PersonOutlineIcon from '@material-ui/icons/PersonOutline'
+import TimerIcon from '@material-ui/icons/Timer'
+import Tooltip from 'material-ui/Tooltip'
+
+import _ from 'lodash'
+import gradient from 'gradient-color'
+import numeral from 'numeral'
+import timeFormat from 'hh-mm-ss'
+import convert from 'convert-units'
+import color from 'color'
+
+import * as BreweryIcons from '../assets/components/BreweryIcons'
+
+const styles = theme => ({
+  root: {
+    flexGrow: 1,
+  },
   card: {
-    minWidth: 275,
+    padding: theme.spacing.unit * 2,
+    color: theme.palette.text.secondary,
   },
-  bullet: {
-    display: 'inline-block',
-    margin: '0 2px',
-    transform: 'scale(0.8)',
+  ingredientCard: {
+    paddingTop: theme.spacing.unit * 2,
+    paddingBottom: theme.spacing.unit * 2,
   },
-  title: {
-    marginBottom: 16,
-    fontSize: 14,
-  },
-  pos: {
-    marginBottom: 12,
-  },
-}
+})
 
-class BacnetDiscover extends React.Component {
+class Home extends React.Component {
   render() {
-    const { classes } = this.props;
-    const bull = <span className={classes.bullet}>•</span>
+    const { theme, classes, recipe } = this.props
+    const srm = gradient(theme.colors.srm, 600)
+    const recipeColor = srm[Math.min(numeral(recipe.est_color).value() * 10, 599)]
+    const boilTime = recipe.boil_time ? timeFormat.fromS(recipe.boil_time * 60) : timeFormat.fromS(0)
+    const boilTimeParts = boilTime.split(':')
     return (
       <div>
-        <Card className={classes.card}>
-          <CardContent>
-            <Typography className={classes.title} color="textSecondary">
-              Word of the Day
-            </Typography>
-            <Typography variant="headline" component="h2">
-              be{bull}nev{bull}o{bull}lent
-            </Typography>
-            <Typography className={classes.pos} color="textSecondary">
-              adjective
-            </Typography>
-            <Typography component="p">
-              well meaning and kindly.<br />
-              {'"a benevolent smile"'}
-            </Typography>
-          </CardContent>
-          <CardActions>
-            <Button size="small">Learn More</Button>
-          </CardActions>
-        </Card>
+        <Grid container spacing={24}>
+          <Grid item xs={12} sm={6}>
+            <Grid container spacing={24} direction='column'>
+              <Grid item>
+                <Card className={classes.card}>
+                  <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Recipe</ListSubheader>}>
+                    <ListItem style={recipe.name ? {} : { display:'none' }}>
+                      <ListItemIcon><EventNoteIcon /></ListItemIcon>
+                      <ListItemText primary={recipe.name || 'Recipe Name'} />
+                    </ListItem>
+                    <Tooltip id='tooltip-brewer' title='Brewer' placement='top-start'>
+                      <ListItem style={recipe.brewer ? {} : { display:'none' }}>
+                        <ListItemIcon><PersonIcon /></ListItemIcon>
+                        <ListItemText primary={recipe.brewer || 'Brewer'} />
+                      </ListItem>
+                    </Tooltip>
+                    <Tooltip id='tooltip-assistant-brewer' title='Assistant Brewery' placement='top-start'>
+                      <ListItem style={recipe.asst_brewer ? {} : { display:'none' }}>
+                        <ListItemIcon><PersonOutlineIcon/></ListItemIcon>
+                        <ListItemText primary={recipe.asst_brewer || 'Assistant Brewer'} />
+                      </ListItem>
+                    </Tooltip>
+                    <Tooltip id='tooltip-batch-size' title='Batch Size' placement='top-start'>
+                      <ListItem style={recipe.batch_size ? {} : { display:'none' }}>
+                        <ListItemIcon style={{ marginLeft: 3 }}><Icon className='fas fa-beer'></Icon></ListItemIcon>
+                        <ListItemText style={{ marginLeft: -1 }} primary={
+                          recipe.batch_size ? `${numeral(convert(recipe.batch_size).from('l').to('gal')).format('0.0')} gal` : ''
+                        } />
+                      </ListItem>
+                    </Tooltip>
+                    <Tooltip id='tooltip-boil-time' title='Boil Time' placement='top-start'>
+                      <ListItem style={recipe.boil_time ? {} : { display:'none' }}>
+                        <ListItemIcon><TimerIcon /></ListItemIcon>
+                        <ListItemText primary={
+                          (boilTimeParts[0] > 0 ? `${numeral(boilTimeParts[0]).value()} hour ` : '') +
+                          (boilTimeParts[1] > 0 ? `${numeral(boilTimeParts[1]).value()} minutes ` : '')
+                        } />
+                      </ListItem>
+                    </Tooltip>
+                    <ListItem style={recipe.est_color ? {
+                      textAlign: 'center',
+                      marginTop: 20,
+                      backgroundColor: recipeColor,
+                      height: 60
+                    } : { display:'none' }}>
+                      <Typography variant='subheading' gutterBottom style={{
+                        paddingTop: 10,
+                        width: '100%',
+                        color: color(recipeColor).isLight() ? '#000' : '#fff'
+                      }}>
+                        {recipe.est_color}
+                      </Typography>
+                    </ListItem>
+                  </List>
+                </Card>
+              </Grid>
+              <Grid item>
+                <Card className={classes.card}>
+                  <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Steps</ListSubheader>}>
+                    <div style={{ height: theme.spacing.unit * 2 }}/>
+                    {recipe.waters && <Divider/>}
+                    {recipe.waters && <List subheader={<ListSubheader component='div'>Water</ListSubheader>}>
+                      {recipe.waters && recipe.waters.map(ingredient => (
+                        <ListItem key={ingredient.id}>
+                          <ListItemIcon><BreweryIcons.WaterIcon /></ListItemIcon>
+                          <ListItemText primary={ingredient.name} secondary={ingredient.display_amount}/>
+                        </ListItem>
+                      ))}
+                    </List>}
+                    {recipe.miscs && <Divider />}
+                    {recipe.miscs && <List subheader={<ListSubheader component='div'>Miscellaneous</ListSubheader>}>
+                      {recipe.miscs && recipe.miscs.map(ingredient => (
+                        <ListItem key={ingredient.id}>
+                          <ListItemIcon><BreweryIcons.MiscIcon /></ListItemIcon>
+                          <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
+                        </ListItem>
+                      ))}
+                    </List>}
+                    {recipe.fermentables && <Divider />}
+                    {recipe.fermentables && <List subheader={<ListSubheader component='div'>Fermentables</ListSubheader>}>
+                      {recipe.fermentables && recipe.fermentables.map(ingredient => (
+                        <ListItem key={ingredient.id}>
+                          <ListItemIcon>{ingredient.type === 'Grain' ? <BreweryIcons.MaltIcon /> : <BreweryIcons.TeaIcon />}</ListItemIcon>
+                          <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
+                        </ListItem>
+                      ))}
+                    </List>}
+                    {recipe.hops && <Divider />}
+                    {recipe.hops && <List subheader={<ListSubheader component='div'>Hops</ListSubheader>}>
+                      {recipe.hops && recipe.hops.map(ingredient => (
+                        <ListItem key={ingredient.id}>
+                          <ListItemIcon><BreweryIcons.HopIcon /></ListItemIcon>
+                          <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
+                        </ListItem>
+                      ))}
+                    </List>}
+                    {recipe.yeasts && <Divider />}
+                    {recipe.yeasts && <List subheader={<ListSubheader component='div'>Yeast</ListSubheader>}>
+                      {recipe.yeasts && recipe.yeasts.map(ingredient => (
+                        <ListItem key={ingredient.id}>
+                          <ListItemIcon><BreweryIcons.YeastIcon /></ListItemIcon>
+                          <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
+                        </ListItem>
+                      ))}
+                    </List>}
+                    <Divider />
+                  </List>
+                </Card>
+              </Grid>
+            </Grid>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Card className={classes.ingredientCard}>
+              <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Ingredients</ListSubheader>}>
+                <div style={{ height: theme.spacing.unit * 2 }}/>
+                {recipe.waters && <Divider/>}
+                {recipe.waters && <List subheader={<ListSubheader component='div'>Water</ListSubheader>}>
+                  {recipe.waters && recipe.waters.map(ingredient => (
+                    <ListItem key={ingredient.id}>
+                      <ListItemIcon><BreweryIcons.WaterIcon /></ListItemIcon>
+                      <ListItemText primary={ingredient.name} secondary={ingredient.display_amount}/>
+                    </ListItem>
+                  ))}
+                </List>}
+                {recipe.miscs && <Divider />}
+                {recipe.miscs && <List subheader={<ListSubheader component='div'>Miscellaneous</ListSubheader>}>
+                  {recipe.miscs && recipe.miscs.map(ingredient => (
+                    <ListItem key={ingredient.id}>
+                      <ListItemIcon><BreweryIcons.MiscIcon /></ListItemIcon>
+                      <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
+                    </ListItem>
+                  ))}
+                </List>}
+                {recipe.fermentables && <Divider />}
+                {recipe.fermentables && <List subheader={<ListSubheader component='div'>Fermentables</ListSubheader>}>
+                  {recipe.fermentables && recipe.fermentables.map(ingredient => (
+                    <ListItem key={ingredient.id}>
+                      <ListItemIcon>{ingredient.type === 'Grain' ? <BreweryIcons.MaltIcon /> : <BreweryIcons.TeaIcon />}</ListItemIcon>
+                      <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
+                    </ListItem>
+                  ))}
+                </List>}
+                {recipe.hops && <Divider />}
+                {recipe.hops && <List subheader={<ListSubheader component='div'>Hops</ListSubheader>}>
+                  {recipe.hops && recipe.hops.map(ingredient => (
+                    <ListItem key={ingredient.id}>
+                      <ListItemIcon><BreweryIcons.HopIcon /></ListItemIcon>
+                      <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
+                    </ListItem>
+                  ))}
+                </List>}
+                {recipe.yeasts && <Divider />}
+                {recipe.yeasts && <List subheader={<ListSubheader component='div'>Yeast</ListSubheader>}>
+                  {recipe.yeasts && recipe.yeasts.map(ingredient => (
+                    <ListItem key={ingredient.id}>
+                      <ListItemIcon><BreweryIcons.YeastIcon /></ListItemIcon>
+                      <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
+                    </ListItem>
+                  ))}
+                </List>}
+                <Divider />
+              </List>
+            </Card>
+          </Grid>
+        </Grid>
       </div>
     )
   }
 }
 
-BacnetDiscover.propTypes = {
+Home.propTypes = {
   classes: PropTypes.object.isRequired,
-};
+}
 
-export default withStyles(styles)(BacnetDiscover)
+const mapStateToProps = (state) => ({
+  recipe: state.recipe
+})
+
+export default withStyles(styles, { withTheme: true })(connect(mapStateToProps)(Home))

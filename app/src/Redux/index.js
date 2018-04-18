@@ -12,16 +12,20 @@ import recipeReducer from './reducers/recipeReducer'
 const urlObj = url.parse(window.location.href)
 const serverPort = process.env.REACT_APP_SERVER_PORT
 const qualUrl = `${urlObj.protocol}//${urlObj.hostname}${serverPort ? ':' + serverPort : ''}`
-console.log(qualUrl)
 let socket = io(qualUrl);
 let socketIoMiddleware = createSocketIoMiddleware(socket, 'server/')
 
-console.log(process.env)
-
 // REDUCERS
+export const SET_STORE_FROM_SERVER = 'SET_STORE_FROM_SERVER'
 const reducers = combineReducers({
   recipe: recipeReducer
 })
+const rootReducer = (state, action) => {
+  if (action.type === SET_STORE_FROM_SERVER) {
+    state = action.payload
+  }
+  return reducers(state, action)
+}
 
 // MIDDLEWARE
 const enhancers = compose(
@@ -30,18 +34,26 @@ const enhancers = compose(
 )
 
 // CREATE THE STORE
-const store = createStore(reducers, enhancers)
+const store = createStore(rootReducer, enhancers)
 store.subscribe(()=>{
   // save the store to the database
-  console.log(`${qualUrl}/store`)
   axios.post(`${qualUrl}/store`, {
     headers: {
   	  'Access-Control-Allow-Origin': '*',
   	},
     method: 'post',
     data: store.getState()
-  }).then(res => {
-    console.log(res)
+  }).catch(err => {
+    console.log(err)
+  })
+})
+
+// SOCKET INFO
+socket.on('store initial state', (data) => {
+  delete data.id
+  store.dispatch({
+    type: SET_STORE_FROM_SERVER,
+    payload: data
   })
 })
 

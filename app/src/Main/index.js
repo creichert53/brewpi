@@ -16,19 +16,19 @@ import Typography from 'material-ui/Typography'
 import IconButton from 'material-ui/IconButton'
 import Hidden from 'material-ui/Hidden'
 import Divider from 'material-ui/Divider'
-import MenuIcon from 'material-ui-icons/Menu'
-import HomeIcon from 'material-ui-icons/Home'
-import SettingsIcon from 'material-ui-icons/Settings'
 import Menu, { MenuItem } from 'material-ui/Menu'
-import AccountCircle from 'material-ui-icons/AccountCircle'
-import FileUpload from 'material-ui-icons/FileUpload'
+import MenuIcon from '@material-ui/icons/Menu'
+import HomeIcon from '@material-ui/icons/Home'
+import SettingsIcon from '@material-ui/icons/Settings'
+import AccountCircle from '@material-ui/icons/AccountCircle'
+import FileUpload from '@material-ui/icons/FileUpload'
 
 import classnames from 'classnames'
 
 import xml2js, { parseString } from 'xml2js'
 
 import Home from '../Home'
-import { newRecipe } from '../Redux/actions'
+import { formatRecipe, newRecipe } from '../Redux/actions'
 
 const styles = theme => ({
   root: {
@@ -47,6 +47,9 @@ const styles = theme => ({
     [theme.breakpoints.up('md')]: {
       width: `calc(100% - ${theme.drawerWidth}px)`,
     },
+    [theme.breakpoints.down('sm')]: {
+      marginLeft: 0,
+    },
   },
   navIconHide: {
     [theme.breakpoints.up('md')]: {
@@ -63,6 +66,7 @@ const styles = theme => ({
   content: {
     flexGrow: 1,
     padding: theme.spacing.unit * 3,
+    overflowY: 'scroll'
   },
   drawerContent: {
     height: '100%',
@@ -166,24 +170,7 @@ class ResponsiveDrawer extends React.Component {
           preserveChildrenOrder: true,
           valueProcessors: [ xml2js.processors.parseNumbers, xml2js.processors.parseBooleans ],
         }, function (err, result) {
-          const r = result.recipes.recipe
-          const categories = ['fermentables', 'hops', 'miscs', 'yeasts', 'mash,mash_steps']
-
-          // fix categories could have multiples to an array
-          categories.forEach((val,i,array) => {
-            // single keys
-            if (r[val]) {
-              const value = r[val][val.substring(0, val.length-1)]
-              r[val] = Array.isArray(value) ? value : [value]
-            }
-            // deep keys (2 levels deep)
-            else if (val.split(',').length === 2) {
-              const keys = val.split(',')
-              const value = r[keys[0]][keys[1]][keys[1].substring(0, keys[1].length-1)]
-              r[keys[0]][keys[1]] = Array.isArray(value) ? value : [value]
-            }
-          })
-
+          const r = formatRecipe(result.recipes.recipe)
           that.props.newRecipe(r)
         })
       }
