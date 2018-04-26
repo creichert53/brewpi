@@ -3,10 +3,14 @@ var _ = require('lodash')
 
 module.exports = class Brew {
   constructor(io, store) {
+    // construct the variables for the brew session
     this.io = io
     this.store = store
     this.previousStore = store.value
     this.activeStep = null
+
+    // declare the outputs
+    // this.pump1 = 
 
     // Create a default CronJob that will run every second and update the store any time there is a change in the active step
     this.storeJob = new CronJob({
