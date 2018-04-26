@@ -5,6 +5,12 @@
 FROM resin/raspberrypi3-node:6-slim
 
 # use apt-get if you need to install dependencies,
+RUN apt-get update && apt-get install -y \
+  python \
+  python-dev \
+  python-dbus \
+  python-pip \
+  build-essential \
 
 # Defines our working directory in container
 WORKDIR /usr/src/app
