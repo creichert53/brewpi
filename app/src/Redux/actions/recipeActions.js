@@ -1,4 +1,4 @@
-import { NEW_RECIPE } from '../types'
+import { NEW_RECIPE, COMPLETE_STEP } from '../types'
 import _ from 'lodash'
 import uuid from 'uuid/v4'
 import timeFormat from 'hh-mm-ss'
@@ -31,16 +31,11 @@ const readyForHotLiquorRecirc = (steps, step) => {
   })
 }
 
-const heatHotLiquorTank = (r, steps, step) => {
+const heatHotLiquorTank = (steps, options) => {
   steps.push({
     id: uuid(),
-    title: step,
-    content: `Heating strike water to ${r.mash_steps[0] && r.mash_steps[0].infuse_temp}`,
-    objects: [ r.mash_steps[0] ],
+    ...(options || {}),
     complete: false,
-    setpoint: r.mash_steps[0].infuse_temp
-      ? Number(numeral(math.unit(r.mash_steps[0].infuse_temp.replace('F','degF').replace('C','degC')).toNumeric('degF')).format('0.0').valueOf())
-      : r.mash_steps[0].step_temp,
     type: stepTypes.HEATING
   })
 }
@@ -81,7 +76,7 @@ export const formatRecipe = (recipe) => {
   steps.push({
     id: uuid(),
     title: r.type === 'Extract' ? 'Water Addition' : 'Strike Water',
-    subheader: `${r.waters ? r.waters[0].name : null}`,
+    subheader: r.waters ? r.waters[0].name : null,
     content: `Add the following ingredients to the ${r.type === 'Extract' ? 'Boil Kettle' : 'Hot Liquor Tank'}:`,
     todos: [
       { step: `${r.waters ? r.waters[0].display_amount : r.display_boil_size} water`, complete: false, id: uuid() },
@@ -108,7 +103,14 @@ export const formatRecipe = (recipe) => {
 
 
     /** HEAT STRIKE WATER (this saves time in the sparge) **/
-    heatHotLiquorTank(r, steps, 'Heat Strike Water')
+    heatHotLiquorTank(steps, {
+      title: 'Heat Strike Water',
+      content: `Heating strike water to ${r.mash_steps[0] && r.mash_steps[0].infuse_temp}`,
+      objects: [ r.mash_steps[0] ],
+      setpoint: r.mash_steps[0].infuse_temp
+        ? Number(numeral(math.unit(r.mash_steps[0].infuse_temp.replace('F','degF').replace('C','degC')).toNumeric('degF')).format('0.0').valueOf())
+        : r.mash_steps[0].step_temp,
+    })
 
     /** FILL MASH TUN WITH WATER **/
     steps.push({
@@ -200,22 +202,18 @@ export const formatRecipe = (recipe) => {
 
 
     /** HEAT SPARGE WATER **/
-    steps.push({
-      id: uuid(),
+    heatHotLiquorTank(steps, {
       title: 'Heat Sparge Water',
       content: `Heating sparge water to ${r.mash.display_sparge_temp}`,
       objects: [ r.mash ],
-      complete: false,
       setpoint: r.mash.sparge_temp,
-      type: stepTypes.HEATING
     })
   }
 
-  /** HEAT STRIKE WATER **/
-  if (r.type === 'All Grain') {
-  }
+  r.steps = steps
 
-  console.log(steps)
+  // because this is the initial upload, set the active step as the first step
+  r.activeStep = steps[0]
 
   return r
 }
@@ -224,5 +222,12 @@ export const newRecipe = (recipe) => {
   return {
     type: NEW_RECIPE,
     payload: recipe
+  }
+}
+
+export const completeStep = (payload) => {
+  return {
+    type: COMPLETE_STEP,
+    payload: payload
   }
 }

@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import { withStyles } from 'material-ui/styles'
 import Card, { CardActions, CardContent } from 'material-ui/Card'
 import Button from 'material-ui/Button'
+import Checkbox from 'material-ui/Checkbox'
 import Divider from 'material-ui/Divider'
 import Icon from 'material-ui/Icon'
 import Typography from 'material-ui/Typography'
@@ -16,9 +17,15 @@ import List, {
   ListItemText,
   ListSubheader,
 } from 'material-ui/List'
+import {
+  FormControl,
+  FormGroup,
+  FormControlLabel,
+} from 'material-ui/Form'
 import EventNoteIcon from '@material-ui/icons/EventNote'
 import PersonIcon from '@material-ui/icons/Person'
 import PersonOutlineIcon from '@material-ui/icons/PersonOutline'
+import Stepper, { Step, StepLabel, StepContent } from 'material-ui/Stepper'
 import TimerIcon from '@material-ui/icons/Timer'
 import Tooltip from 'material-ui/Tooltip'
 
@@ -28,12 +35,17 @@ import numeral from 'numeral'
 import timeFormat from 'hh-mm-ss'
 import convert from 'convert-units'
 import color from 'color'
+import { completeStep } from '../Redux/actions'
 
 import * as BreweryIcons from '../assets/components/BreweryIcons'
 
 const styles = theme => ({
   root: {
     flexGrow: 1,
+  },
+  button: {
+    marginTop: theme.spacing.unit,
+    marginRight: theme.spacing.unit,
   },
   card: {
     padding: theme.spacing.unit * 2,
@@ -46,12 +58,17 @@ const styles = theme => ({
 })
 
 class Home extends React.Component {
+  complete = (payload) => {
+    this.props.completeStep(payload)
+  }
+
   render() {
-    const { theme, classes, recipe } = this.props
+    const { theme, classes, recipe, steps } = this.props
     const srm = gradient(theme.colors.srm, 600)
     const recipeColor = srm[Math.min(numeral(recipe.est_color).value() * 10, 599)]
     const boilTime = recipe.boil_time ? timeFormat.fromS(recipe.boil_time * 60) : timeFormat.fromS(0)
     const boilTimeParts = boilTime.split(':')
+    const activeStep = (steps && _.findIndex(steps, step => !step.complete))
     return (
       <div>
         <Grid container spacing={24}>
@@ -111,62 +128,60 @@ class Home extends React.Component {
                 </Card>
               </Grid>
               <Grid item>
-                <Card className={classes.card}>
+                <Card className={classes.ingredientCard}>
                   <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Steps</ListSubheader>}>
-                    <div style={{ height: theme.spacing.unit * 2 }}/>
-                    {recipe.waters && <Divider/>}
-                    {recipe.waters && <List subheader={<ListSubheader component='div'>Water</ListSubheader>}>
-                      {recipe.waters && recipe.waters.map(ingredient => (
-                        <ListItem key={ingredient.id}>
-                          <ListItemIcon><BreweryIcons.WaterIcon /></ListItemIcon>
-                          <ListItemText primary={ingredient.name} secondary={ingredient.display_amount}/>
-                        </ListItem>
-                      ))}
-                    </List>}
-                    {recipe.miscs && <Divider />}
-                    {recipe.miscs && <List subheader={<ListSubheader component='div'>Miscellaneous</ListSubheader>}>
-                      {recipe.miscs && recipe.miscs.map(ingredient => (
-                        <ListItem key={ingredient.id}>
-                          <ListItemIcon><BreweryIcons.MiscIcon /></ListItemIcon>
-                          <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
-                        </ListItem>
-                      ))}
-                    </List>}
-                    {recipe.fermentables && <Divider />}
-                    {recipe.fermentables && <List subheader={<ListSubheader component='div'>Fermentables</ListSubheader>}>
-                      {recipe.fermentables && recipe.fermentables.map(ingredient => (
-                        <ListItem key={ingredient.id}>
-                          <ListItemIcon>{ingredient.type === 'Grain' ? <BreweryIcons.MaltIcon /> : <BreweryIcons.TeaIcon />}</ListItemIcon>
-                          <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
-                        </ListItem>
-                      ))}
-                    </List>}
-                    {recipe.hops && <Divider />}
-                    {recipe.hops && <List subheader={<ListSubheader component='div'>Hops</ListSubheader>}>
-                      {recipe.hops && recipe.hops.map(ingredient => (
-                        <ListItem key={ingredient.id}>
-                          <ListItemIcon><BreweryIcons.HopIcon /></ListItemIcon>
-                          <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
-                        </ListItem>
-                      ))}
-                    </List>}
-                    {recipe.yeasts && <Divider />}
-                    {recipe.yeasts && <List subheader={<ListSubheader component='div'>Yeast</ListSubheader>}>
-                      {recipe.yeasts && recipe.yeasts.map(ingredient => (
-                        <ListItem key={ingredient.id}>
-                          <ListItemIcon><BreweryIcons.YeastIcon /></ListItemIcon>
-                          <ListItemText primary={ingredient.name} secondary={`${ingredient.type}: ${ingredient.display_amount}`}/>
-                        </ListItem>
-                      ))}
-                    </List>}
-                    <Divider />
+                    <Stepper
+                      activeStep={activeStep}
+                      orientation='vertical'
+                    >
+                      {steps ? steps.map((step, index) => {
+                        return (
+                          <Step key={step.id}>
+                            <StepLabel>{step.title}</StepLabel>
+                            <StepContent>
+                              <Typography>{step.content}</Typography>
+                              {step.todos ? (
+                                <FormControl component='fieldset'>
+                                  <FormGroup style={{ padding: theme.spacing.unit * 2 }}>
+                                    {
+                                      step.todos.map((todo, index) => (
+                                        <FormControlLabel
+                                          key={todo.id}
+                                          control={
+                                            <Checkbox
+                                              checked={todo.complete}
+                                              onChange={() => this.complete({ id: todo.id, type: 'todo' })}
+                                              value={todo.id}
+                                            />
+                                          }
+                                          label={todo.step}
+                                        />)
+                                      )
+                                    }
+                                    <Button
+                                      variant='raised'
+                                      color='primary'
+                                      onClick={() => this.complete({ id: step.id, type: 'step' })}
+                                      disabled={step.todos.filter(todo => !todo.complete).length > 0} // disabled if there are incomplete todos
+                                      className={classes.button}
+                                    >
+                                      {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                                    </Button>
+                                  </FormGroup>
+                                </FormControl>
+                              ) : null}
+                            </StepContent>
+                          </Step>
+                        )
+                      }) : []}
+                    </Stepper>
                   </List>
                 </Card>
               </Grid>
             </Grid>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Card className={classes.ingredientCard}>
+            <Card className={classes.card}>
               <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Ingredients</ListSubheader>}>
                 <div style={{ height: theme.spacing.unit * 2 }}/>
                 {recipe.waters && <Divider/>}
@@ -229,7 +244,10 @@ Home.propTypes = {
 }
 
 const mapStateToProps = (state) => ({
-  recipe: state.recipe
+  recipe: state.recipe,
+  steps: state.recipe.steps
 })
 
-export default withStyles(styles, { withTheme: true })(connect(mapStateToProps)(Home))
+export default withStyles(styles, { withTheme: true })(connect(mapStateToProps, {
+  completeStep
+})(Home))

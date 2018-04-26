@@ -7,6 +7,8 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const r = require('rethinkdb')
 
+const Brew = require('./brew')
+
 const port = process.env.REACT_APP_SERVER_PORT || 3001
 
 const app = express()
@@ -24,7 +26,19 @@ app.use(bodyParser.json())
 const httpServer = http.createServer(app)
 const io = socket(httpServer)
 
-var store = {}
+// Get the initial store
+function store() {
+  this.value = {}
+}
+r.connect({db: 'brewery'}).then(conn => {
+  r.table('store').get('store').coerceTo('object').run(conn).then(results => {
+    store.value = results
+    conn.close()
+  }).catch(err => {
+    conn.close()
+  })
+})
+
 app.post('/store', (req, res) => {
   r.connect({db: 'brewery'}).then(conn => {
     r.table('store').insert({
@@ -32,7 +46,7 @@ app.post('/store', (req, res) => {
       ...req.body.data
     }, { conflict: 'replace' }).run(conn).then(results => {
       conn.close()
-      store = req.body.data
+      store.value = req.body.data
       return res.json({ success: true })
     }).catch(err => {
       conn.close()
@@ -40,6 +54,9 @@ app.post('/store', (req, res) => {
     })
   })
 })
+
+// Create a brew-session
+var brew = new Brew(io, store)
 
 // Serve static bundle
 app.get('/', (req, res) => {
@@ -51,12 +68,11 @@ httpServer.listen(port, () => {
 })
 
 io.on('connection', function (socket) {
-  console.log('We have a connection!')
   r.connect({db: 'brewery'}).then(conn => {
     r.table('store').get('store').coerceTo('object').run(conn).then(result => {
       conn.close()
-      store = result
-      socket.emit('store initial state', store)
+      store.value = result
+      socket.emit('store initial state', store.value)
     }).catch(err => {
       conn.close()
     })
