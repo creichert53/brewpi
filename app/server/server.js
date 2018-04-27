@@ -79,7 +79,7 @@ app.get('/', (req, res) => {
 httpServer.listen(port, () => {
   console.log(`HTTP Server is listening on port ${port}`)
 })
-
+// wth
 io.on('connection', function (socket) {
   // r.connect({db: 'brewery'}).then(conn => {
   //   r.table('store').get('store').coerceTo('object').run(conn).then(result => {

@@ -2,16 +2,6 @@ version: '2'
 volumes:
   rethink_data:
 services:
-  rethinkdb:
-    build: ./rethinkdb
-    privileged: true
-    restart: always
-    volumes:
-      - 'rethink_data:/data'
-    ports:
-      - "8080"
-      - "28015"
-      - "29015"
   app:
     build: ./app
     privileged: true
