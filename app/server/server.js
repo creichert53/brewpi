@@ -31,41 +31,41 @@ const io = socket(httpServer)
 function store() {
   this.value = {}
 }
-// r.connect({db: 'brewery'}).then(conn => {
-//   r.table('store').get('store').coerceTo('object').run(conn).then(results => {
-//     store.value = results
-//     conn.close()
-//   }).catch(err => {
-//     conn.close()
-//   })
-// })
-fs.readFile('server/database/store.js', 'utf8', (err, result) => {
-  if (err) throw err
-  store.value = JSON.parse(result || '{}')
+r.connect({db: 'brewery'}).then(conn => {
+  r.table('store').get('store').coerceTo('object').run(conn).then(results => {
+    store.value = results
+    conn.close()
+  }).catch(err => {
+    conn.close()
+  })
 })
+// fs.readFile('server/database/store.js', 'utf8', (err, result) => {
+//   if (err) throw err
+//   store.value = JSON.parse(result || '{}')
+// })
 
 app.post('/store', (req, res) => {
-  // r.connect({db: 'brewery'}).then(conn => {
-  //   r.table('store').insert({
-  //     id: 'store',
-  //     ...req.body.data
-  //   }, { conflict: 'replace' }).run(conn).then(results => {
-  //     conn.close()
-  //     store.value = req.body.data
-  //     return res.json({ success: true })
-  //   }).catch(err => {
-  //     conn.close()
-  //     return res.json({ success: false })
-  //   })
-  // })
-
-  fs.writeFile('server/database/store.js', JSON.stringify(req.body.data,null,2), (err) => {
-    if (err) {
-      throw err
-    }
-    store.value = req.body.data
-    return res.json({ success: true })
+  r.connect({db: 'brewery'}).then(conn => {
+    r.table('store').insert({
+      id: 'store',
+      ...req.body.data
+    }, { conflict: 'replace' }).run(conn).then(results => {
+      conn.close()
+      store.value = req.body.data
+      return res.json({ success: true })
+    }).catch(err => {
+      conn.close()
+      return res.json({ success: false })
+    })
   })
+
+  // fs.writeFile('server/database/store.js', JSON.stringify(req.body.data,null,2), (err) => {
+  //   if (err) {
+  //     throw err
+  //   }
+  //   store.value = req.body.data
+  //   return res.json({ success: true })
+  // })
 })
 
 // Create a brew-session
@@ -81,20 +81,20 @@ httpServer.listen(port, () => {
 })
 // wth
 io.on('connection', function (socket) {
-  // r.connect({db: 'brewery'}).then(conn => {
-  //   r.table('store').get('store').coerceTo('object').run(conn).then(result => {
-  //     conn.close()
-  //     store.value = result
-  //     socket.emit('store initial state', store.value)
-  //   }).catch(err => {
-  //     conn.close()
-  //   })
-  // })
-  fs.readFile('server/database/store.js', 'utf8', (err, result) => {
-    if (err) throw err
-    store.value = JSON.parse(result || '{}')
-    socket.emit('store initial state', store.value)
+  r.connect({db: 'brewery'}).then(conn => {
+    r.table('store').get('store').coerceTo('object').run(conn).then(result => {
+      conn.close()
+      store.value = result
+      socket.emit('store initial state', store.value)
+    }).catch(err => {
+      conn.close()
+    })
   })
+  // fs.readFile('server/database/store.js', 'utf8', (err, result) => {
+  //   if (err) throw err
+  //   store.value = JSON.parse(result || '{}')
+  //   socket.emit('store initial state', store.value)
+  // })
 
   socket.on('action', (action) => {
     if (action.type === 'server/new_recipe') {
