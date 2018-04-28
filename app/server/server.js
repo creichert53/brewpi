@@ -46,10 +46,9 @@ r.connect({db: 'brewery'}).then(conn => {
 
 app.post('/store', (req, res) => {
   r.connect({db: 'brewery'}).then(conn => {
-    r.table('store').insert({
-      id: 'store',
-      ...req.body.data
-    }, { conflict: 'replace' }).run(conn).then(results => {
+    const s = Object.assign({}, req.body.data)
+    s.id = 'store'
+    r.table('store').insert(s}, { conflict: 'replace' }).run(conn).then(results => {
       conn.close()
       store.value = req.body.data
       return res.json({ success: true })
