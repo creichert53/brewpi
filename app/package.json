@@ -30,7 +30,6 @@
     "material-ui": "^1.0.0-beta.40",
     "mathjs": "^4.1.1",
     "numeral": "^2.0.6",
-    "onoff": "^3.0.2",
     "prop-types": "^15.6.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
