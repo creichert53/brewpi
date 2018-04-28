@@ -80,6 +80,7 @@ httpServer.listen(port, () => {
 })
 // wth
 io.on('connection', function (socket) {
+  console.log('We have a connection!')
   r.connect({db: 'brewery'}).then(conn => {
     r.table('store').get('store').coerceTo('object').run(conn).then(result => {
       conn.close()
