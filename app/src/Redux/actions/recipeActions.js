@@ -1,7 +1,7 @@
 import { NEW_RECIPE, COMPLETE_STEP } from '../types'
 import _ from 'lodash'
 import uuid from 'uuid/v4'
-import timeFormat from 'hh-mm-ss'
+import timeFormat from '../../helpers/hhmmss.js'
 import numeral from 'numeral'
 import math from 'mathjs'
 
