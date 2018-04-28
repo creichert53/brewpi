@@ -54,6 +54,8 @@
     "concurrently": "^3.5.1"
   },
   "nodemonConfig": {
-    "ignore": ["server/database/*"]
+    "ignore": [
+      "server/database/*"
+    ]
   }
 }
