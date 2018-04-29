@@ -12,6 +12,7 @@ import recipeReducer from './reducers/recipeReducer'
 const urlObj = url.parse(window.location.href)
 const serverPort = process.env.REACT_APP_SERVER_PORT
 const qualUrl = `${urlObj.protocol}//${urlObj.hostname}${serverPort ? ':' + serverPort : ''}`
+console.log(qualUrl)
 let socket = io(qualUrl);
 let socketIoMiddleware = createSocketIoMiddleware(socket, 'server/')
 
