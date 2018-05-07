@@ -28,22 +28,22 @@ module.exports = class _0_prepareStrikeWater {
     })
   }
 
-  start = () => {
+  start() {
     this.paused = false,
     this.isRunning = true
   }
 
-  finish = () => {
+  finish() {
     this.paused = false
     this.isRunning = false
   }
 
-  pause = () => {
+  pause() {
     this.paused = true
     this.stepTimer.stop()
   }
 
-  resume = () => {
+  resume() {
     this.paused = false
   }
 }
