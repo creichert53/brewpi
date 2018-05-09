@@ -5,6 +5,9 @@
 FROM resin/raspberrypi3-node:6-slim
 
 # use apt-get if you need to install dependencies,
+RUN apt-get update && \
+  apt-get install -y python python-dev python-pip python-virtualenv && \
+  rm -rf /var/lib/apt/lists/*
 
 # Defines our working directory in container
 WORKDIR /usr/src/app
@@ -14,11 +17,7 @@ COPY package.json package.json
 
 # This install npm dependencies on the resin.io build server,
 # making sure to clean up the artifacts it creates in order to reduce the image size.
-RUN \
-  apt-get update && \
-  apt-get install -y python python-dev python-pip python-virtualenv && \
-  rm -rf /var/lib/apt/lists/* \
-  JOBS=MAX npm install -g nodemon node-gyp && npm install --force --production --unsafe-perm && npm cache clean && rm -rf /tmp/*
+RUN JOBS=MAX npm install -g nodemon node-gyp && npm install --force --production --unsafe-perm && npm cache clean && rm -rf /tmp/*
 
 # This will copy all files in our root to the working  directory in the container
 COPY . ./
