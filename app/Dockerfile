@@ -6,7 +6,7 @@ FROM resin/raspberrypi3-node:8-slim
 
 # use apt-get if you need to install dependencies,
 RUN apt-get update && \
-  apt-get install -y python python-dev python-pip python-virtualenv make g++ && \
+  apt-get install -y python python-dev python-pip python-virtualenv make g++ libkrb5-dev && \
   rm -rf /var/lib/apt/lists/*
 
 # Defines our working directory in container
