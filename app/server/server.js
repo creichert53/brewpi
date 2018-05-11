@@ -6,7 +6,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const fs = require('fs')
-// const r = require('rethinkdb')
+const r = require('rethinkdb')
 
 const Brew = require('./brew')
 
@@ -39,10 +39,6 @@ r.connect({db: 'brewery'}).then(conn => {
     conn.close()
   })
 })
-// fs.readFile('server/database/store.js', 'utf8', (err, result) => {
-//   if (err) throw err
-//   store.value = JSON.parse(result || '{}')
-// })
 
 app.post('/store', (req, res) => {
   r.connect({db: 'brewery'}).then(conn => {
@@ -57,14 +53,6 @@ app.post('/store', (req, res) => {
       return res.json({ success: false })
     })
   })
-
-  // fs.writeFile('server/database/store.js', JSON.stringify(req.body.data,null,2), (err) => {
-  //   if (err) {
-  //     throw err
-  //   }
-  //   store.value = req.body.data
-  //   return res.json({ success: true })
-  // })
 })
 
 // Create a brew-session
@@ -80,7 +68,6 @@ httpServer.listen(port, () => {
 })
 // wth
 io.on('connection', function (socket) {
-  console.log('We have a connection!')
   r.connect({db: 'brewery'}).then(conn => {
     r.table('store').get('store').coerceTo('object').run(conn).then(result => {
       conn.close()
@@ -90,11 +77,6 @@ io.on('connection', function (socket) {
       conn.close()
     })
   })
-  // fs.readFile('server/database/store.js', 'utf8', (err, result) => {
-  //   if (err) throw err
-  //   store.value = JSON.parse(result || '{}')
-  //   socket.emit('store initial state', store.value)
-  // })
 
   socket.on('action', (action) => {
     if (action.type === 'server/new_recipe') {
