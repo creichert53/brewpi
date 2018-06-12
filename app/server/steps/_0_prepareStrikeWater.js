@@ -1,4 +1,3 @@
-var onoff = require('pi-pins')
 var CronJob = require('cron').CronJob
 
 /**

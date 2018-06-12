@@ -5,14 +5,17 @@ import io from 'socket.io-client'
 import url from 'url'
 import axios from 'axios'
 
+// IMPORT TYPES
+import { TEMPERATURE, TEMPERATURES } from './types'
+
 // IMPORT REDUCERS
 import recipeReducer from './reducers/recipeReducer'
+import themistorReducer from './reducers/thermistorReducer'
 
 // CREATE SOCKET-IO MIDDLEWARE
 const urlObj = url.parse(window.location.href)
 const serverPort = process.env.REACT_APP_SERVER_PORT
 const qualUrl = `${urlObj.protocol}//${urlObj.hostname}${serverPort ? ':' + serverPort : ''}`
-console.log(qualUrl)
 let socket = io(qualUrl);
 let socketIoMiddleware = createSocketIoMiddleware(socket, 'server/')
 
@@ -39,9 +42,9 @@ const store = createStore(rootReducer, enhancers)
 store.subscribe(()=>{
   // save the store to the database
   axios.post(`${qualUrl}/store`, {
-    headers: {
-  	  'Access-Control-Allow-Origin': '*',
-  	},
+    // headers: {
+  	//   'Access-Control-Allow-Origin': '*',
+  	// },
     method: 'post',
     data: store.getState()
   }).catch(err => {
@@ -57,5 +60,20 @@ socket.on('store initial state', (data) => {
     payload: data
   })
 })
+// socket.on('new temperature', (id, value) => {
+//   store.dispatch({
+//     type: TEMPERATURE,
+//     payload: {
+//       id: id,
+//       value: value
+//     }
+//   })
+// })
+// socket.on('new temperatures', (value) => {
+//   store.dispatch({
+//     type: TEMPERATURES,
+//     payload: value
+//   })
+// })
 
 export default store

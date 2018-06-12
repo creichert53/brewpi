@@ -10,7 +10,7 @@ import { BrowserRouter as Router } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 
 /** MATERIAL-UI **/
-import { MuiThemeProvider, withStyles } from 'material-ui/styles'
+import { MuiThemeProvider, withStyles } from '@material-ui/core/styles'
 
 /** CUSTOM **/
 import { muiTheme } from './assets/muiTheme'
@@ -21,7 +21,8 @@ const Background = require('./assets/background.png')
 const styles = theme => ({
   content: {
     /* The image used */
-    backgroundImage: `url(${Background})`,
+    // backgroundImage: `url(${Background})`,
+    backgroundColor: '#303A45',
 
     /* Full height */
     position: 'absolute',

@@ -1,6 +1,9 @@
-import { createMuiTheme } from 'material-ui/styles'
+import { createMuiTheme } from '@material-ui/core/styles'
 
 const muiTheme = createMuiTheme({
+  palette: {
+    type: 'dark',
+  },
   drawerWidth: 300,
   typography: {
     fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
@@ -9,6 +12,11 @@ const muiTheme = createMuiTheme({
       textTransform: 'uppercase',
       fontWeight: 500,
       fontFamily: "'Monoton', 'Helvetica', 'Arial', sans-serif",
+    },
+    tempFont: {
+      fontSize: '2rem',
+      fontSize: 100,
+      fontFamily: "'Lato', 'Helvetica', 'Arial', sans-serif",
     }
   },
   colors: {

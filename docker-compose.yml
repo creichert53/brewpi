@@ -9,15 +9,15 @@ services:
     volumes:
       - 'rethink_data:/data'
     ports:
-      - "8080"
-      - "28015"
-      - "29015"
-  app:
-    build: ./app
-    privileged: true
-    restart: always
-    depends_on:
-      - rethinkdb
-    ports:
-      - "80"
-      - "443"
+      - "8080:8080"
+      - "28015:28015"
+      - "29015:29015"
+  # app:
+  #   build: ./app
+  #   privileged: true
+  #   restart: always
+  #   # depends_on:
+  #   #   - rethinkdb
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"

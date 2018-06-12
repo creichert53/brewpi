@@ -24,7 +24,7 @@ RUN JOBS=MAX npm install -g node-gyp nodemon && npm install --production --unsaf
 COPY . ./
 
 # Enable systemd init system in container
-ENV INITSYSTEM on
+# ENV INITSYSTEM on
 
 # server.js will run when container starts up on the device
 CMD ["npm", "start"]

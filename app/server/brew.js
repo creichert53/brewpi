@@ -3,10 +3,11 @@ var CronJob = require('cron').CronJob
 var _0_prepareStrikeWater = require('./steps/_0_prepareStrikeWater')
 
 module.exports = class Brew {
-  constructor(io, store) {
+  constructor(io, store, gpio) {
     // construct the variables for the brew session
     this.io = io
     this.store = store
+    this.gpio = gpio
     this.previousStore = store.value
     this.activeStep = null
     this.stepClass = null
@@ -42,8 +43,7 @@ module.exports = class Brew {
                 console.log('Preparing strike water...')
                 this.stepClass = new _0_prepareStrikeWater({
                   io: this.io,
-                  activeStep: this.activeStep,
-                  
+                  activeStep: this.activeStep
                 })
                 break
               case 'PREPARE_FOR_HTL_HEAT':
