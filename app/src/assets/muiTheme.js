@@ -27,6 +27,11 @@ const muiTheme = createMuiTheme({
       '#FF5992',
       '#841983',
     ],
+    graph: {
+      temp1: '#e9229a',
+      temp2: '#2ad63b',
+      temp3: '#4940fa'
+    },
     status: {
       success: '#2ced96',
       warning: '#ebde3b',

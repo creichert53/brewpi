@@ -1,5 +1,6 @@
 const mcpadc = require('mcp-spi-adc')
 const _ = require('lodash')
+const numeral = require('numeral')
 const EventEmitter = require( 'events' )
 
 module.exports = class thermistor extends EventEmitter {
@@ -24,7 +25,7 @@ module.exports = class thermistor extends EventEmitter {
     const rand = Math.round(_.random(1.5, 3, true) * 1000)
 
     this.tempInterval = setInterval(() => {
-      this.emit('new temperature', this.value)
+      this.emit('new temperature', this.value > 0 ? numeral(this.value).value() : null)
     }, rand)
   }
 
@@ -57,6 +58,6 @@ module.exports = class thermistor extends EventEmitter {
       sum += this.tempArray[i]
     }
 
-    return (sum/this.tempArray.length).toFixed(1)
+    return (sum/this.tempArray.length)
   }
 }

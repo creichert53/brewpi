@@ -1,16 +1,17 @@
-import { NEW_RECIPE, COMPLETE_STEP } from '../types'
+import { NEW_RECIPE, COMPLETE_STEP, START_BREW } from '../types'
 import _ from 'lodash'
 import uuid from 'uuid/v4'
 import timeFormat from '../../helpers/hhmmss.js'
 import numeral from 'numeral'
 import math from 'mathjs'
+import traverse from 'traverse'
 
 export const stepTypes = {
   PREPARE_STRIKE_WATER: 'PREPARE_STRIKE_WATER',
   PREPARE_FOR_HTL_HEAT: 'PREPARE_FOR_HTL_HEAT',
   ADD_WATER_TO_MASH_TUN: 'ADD_WATER_TO_MASH_TUN',
   PREPARE_FOR_MASH_RECIRC: 'PREPARE_FOR_MASH_RECIRC',
-  RECIRC_MASH: 'RECIRC_MASH',
+  // RECIRC_MASH: 'RECIRC_MASH',
   ADD_INGREDIENTS: 'ADD_INGREDIENTS',
   HEATING: 'HEATING',
   RESTING: 'RESTING'
@@ -42,6 +43,8 @@ const heatHotLiquorTank = (steps, options) => {
 
 export const formatRecipe = (recipe) => {
   var r = { ...recipe }
+
+  r.startBrew = false
 
   var categories = ['fermentables', 'hops', 'miscs', 'waters', 'yeasts', 'mash,mash_steps']
 
@@ -172,24 +175,31 @@ export const formatRecipe = (recipe) => {
 
     /** MASH STEPS **/
     r.mash_steps.forEach(step => {
+      var sp = step.display_step_temp
+        ? Number(numeral(math.unit(step.display_step_temp.replace('F','degF').replace('C','degC')).toNumeric('degF')).format('0.0').valueOf())
+        : Number(numeral(math.unit(step.step_temp, 'degC').toNumeric('degF')).format('0.0').valueOf())
+
       steps.push({
         id: uuid(),
         title: `${step.name} Heating`,
         content: `Heat Mash to ${step.display_step_temp}`,
         objects: [ step ],
-        // setpoint: r.step.step_temp,
+        setpoint: sp,
         type: stepTypes.HEATING
       })
 
-      const restTime = (step.step_time ? timeFormat.fromS(step.step_time * 60) : timeFormat.fromS(0)).split(':')
+      const restTime = (step.step_time ? timeFormat.fromS(step.step_time * 60, 'hh:mm:ss') : timeFormat.fromS(0, 'hh:mm:ss')).split(':')
       steps.push({
         id: uuid(),
         title: `${step.name} Rest`,
-        content: `Holding Mash at ${step.display_step_temp} for ${
+        content: `Holding Mash at ${step.display_step_temp} for ${_.trimEnd(
           (restTime[0] > 0 ? `${numeral(restTime[0]).value()} hour ` : '') +
-          (restTime[1] > 0 ? `${numeral(restTime[1]).value()} minutes ` : '')
+          (restTime[1] > 0 ? `${numeral(restTime[1]).value()} minutes ` : '') +
+          (restTime[2] > 0 ? `${numeral(restTime[2]).value()} seconds ` : ''))
         }`,
         objects: [step],
+        setpoint: sp,
+        stepTime: step.step_time, // minutes
         type: stepTypes.RESTING
       })
     })
@@ -225,9 +235,41 @@ export const newRecipe = (recipe) => {
   }
 }
 
+export const startBrew = () => {
+  return (dispatch, getState) => {
+    var recipe = _.cloneDeep(getState().recipe)
+    recipe.startBrew = true
+
+    dispatch({
+      type: START_BREW,
+      payload: recipe
+    })
+  }
+}
+
 export const completeStep = (payload) => {
-  return {
-    type: COMPLETE_STEP,
-    payload: payload
+  return (dispatch, getState) => {
+    var recipe = _.cloneDeep(getState().recipe)
+    traverse(recipe).forEach(function(val) {
+      if (val && typeof val === 'object' && val.id && val.id === payload.id) {
+        this.update({
+          ...val,
+          complete: true
+        })
+      }
+    })
+
+    // set the active step
+    if (payload.type === 'step') {
+      const incompleteSteps = recipe.steps.filter(step => !step.complete)
+      recipe.activeStep = incompleteSteps.length > 0 ? incompleteSteps[0] : {
+        complete: true
+      }
+    }
+
+    dispatch({
+      type: COMPLETE_STEP,
+      payload: recipe
+    })
   }
 }

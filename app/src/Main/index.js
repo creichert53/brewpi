@@ -31,6 +31,7 @@ import classnames from 'classnames'
 import xml2js, { parseString } from 'xml2js'
 
 import Home from '../Home'
+import Settings from '../Settings'
 import { formatRecipe, newRecipe } from '../Redux/actions'
 
 const styles = theme => ({
@@ -96,6 +97,9 @@ const styles = theme => ({
   },
   input: {
     display: 'none',
+  },
+  list: {
+    backgroundColor: 'rgb(145, 145, 145, 0.25)'
   }
 })
 
@@ -108,7 +112,7 @@ const routes = [
   },
   {
     path: '/settings',
-    component: Home,
+    component: Settings,
     icon: SettingsIcon,
     text: 'Settings'
   }
@@ -184,7 +188,7 @@ class ResponsiveDrawer extends React.Component {
   }
 
   render() {
-    const { classes, theme, history, location } = this.props
+    const { classes, theme, history, location, time } = this.props
     const { anchorEl } = this.state
     const open = Boolean(anchorEl)
 
@@ -196,13 +200,13 @@ class ResponsiveDrawer extends React.Component {
             <div style={theme.typography.titleFont}>Reichert Home Brewery</div>
           </div>
           <Divider />
-          <List>
+          <List className={classes.list}>
             {routes.map((route, i) =>
               <DrawerListWithRoutes
                 {...route}
                 {...history}
                 key={i}
-                style={location.pathname === route.path ? { color: theme.colors.palette[0] } : {}}
+                style={location.pathname === route.path ? { color: theme.colors.palette[0] } : { color: 'rgb(100, 100, 100)' }}
               />)}
           </List>
           <Divider />
@@ -224,6 +228,9 @@ class ResponsiveDrawer extends React.Component {
             </IconButton>
             <Typography variant='title' color='inherit' noWrap style={{ flex:1 }}>
               {routes.filter(x => x.path === location.pathname).map((route, i) => route.text)}
+            </Typography>
+            <Typography variant='title' color='inherit' noWrap>
+              {time.totalTime}
             </Typography>
             <div>
 
@@ -315,6 +322,10 @@ ResponsiveDrawer.propTypes = {
   theme: PropTypes.object.isRequired,
 }
 
-export default withStyles(styles, { withTheme: true })(withRouter(connect(null, {
+const mapStateToProps = (state) => ({
+  time: state.time
+})
+
+export default withStyles(styles, { withTheme: true })(withRouter(connect(mapStateToProps, {
   newRecipe
 })(ResponsiveDrawer)))

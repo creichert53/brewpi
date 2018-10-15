@@ -2,24 +2,27 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import PropTypes from 'prop-types'
+import classnames from 'classnames'
 import { withStyles } from '@material-ui/core/styles'
 import Card from '@material-ui/core/Card'
 import Button from '@material-ui/core/Button'
 import Checkbox from '@material-ui/core/Checkbox'
 import Divider from '@material-ui/core/Divider'
-import Icon from '@material-ui/core/Icon'
+import EventNoteIcon from '@material-ui/icons/EventNote'
+import FormControl from '@material-ui/core/FormControl'
+import FormGroup from '@material-ui/core/FormGroup'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
+import Icon from '@material-ui/core/Icon'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
 import ListSubheader from '@material-ui/core/ListSubheader'
-import FormControl from '@material-ui/core/FormControl'
-import FormGroup from '@material-ui/core/FormGroup'
-import FormControlLabel from '@material-ui/core/FormControlLabel'
-import EventNoteIcon from '@material-ui/icons/EventNote'
+import LinearProgress from '@material-ui/core/LinearProgress'
 import PersonIcon from '@material-ui/icons/Person'
 import PersonOutlineIcon from '@material-ui/icons/PersonOutline'
+import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline'
 import Stepper from '@material-ui/core/Stepper'
 import Step from '@material-ui/core/Step'
 import StepLabel from '@material-ui/core/StepLabel'
@@ -29,16 +32,16 @@ import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
 
 import _ from 'lodash'
-import url from 'url'
-import axios from 'axios'
 import gradient from 'gradient-color'
 import numeral from 'numeral'
 import timeFormat from '../helpers/hhmmss.js'
+import traverse from 'traverse'
 import convert from 'convert-units'
 import color from 'color'
-import { completeStep } from '../Redux/actions'
+import { completeStep, startBrew } from '../Redux/actions'
 
 import * as BreweryIcons from '../assets/components/BreweryIcons'
+import TempChart from './TempChart'
 
 const styles = theme => ({
   root: {
@@ -47,6 +50,11 @@ const styles = theme => ({
   button: {
     marginTop: theme.spacing.unit,
     marginRight: theme.spacing.unit,
+    marginBottom: theme.spacing.unit,
+  },
+  startButton: {
+    marginRight: 'auto',
+    marginLeft: 'auto'
   },
   card: {
     padding: theme.spacing.unit * 2,
@@ -55,6 +63,7 @@ const styles = theme => ({
   tempCard: {
     padding: theme.spacing.unit * 2,
     color: theme.palette.text.secondary,
+    minWidth: 250,
     textAlign: 'center',
     fontSize: '100px'
   },
@@ -62,50 +71,52 @@ const styles = theme => ({
     paddingTop: theme.spacing.unit * 2,
     paddingBottom: theme.spacing.unit * 2,
   },
+  icon: {
+    margin: theme.spacing.unit,
+    fontSize: 32,
+  },
+  setpointMark: {
+    float: 'right',
+    position: 'relative',
+    right: '50%',
+    marginTop: -10,
+    dropShadow: theme.shadows[10]
+  },
+  setpointText: {
+    paddingLeft: theme.spacing.unit * 2,
+    paddingBottom: theme.spacing.unit
+  }
 })
 
-const urlObj = url.parse(window.location.href)
-const serverPort = process.env.REACT_APP_SERVER_PORT
-const qualUrl = `${urlObj.protocol}//${urlObj.hostname}${serverPort ? ':' + serverPort : ''}`
-
-var sensors = {
-  temp1: 'Hot Liquor Tank',
-  temp2: 'RIMS Tube',
-  temp3: 'Mash Tun'
-}
+const TempCard = props => (
+  <Grid item xs={12} md={props.tempArrayLength > 0 ? 12/props.tempArrayLength : 12} style={props.temperature ? {} : { display: 'none' }}>
+    <Card>
+      <div className={props.classes.tempCard}>
+        {props.temperature ? props.temperature.toFixed(1) : props.temperature}
+        <Typography variant='headline'>
+          {props.tempKeys[props.index] ? props.tempKeys[props.index].name : ''}
+        </Typography>
+      </div>
+      <div style={props.step && props.step.setpoint ? { flex: 1, opacity: (props.setpointBar ? 1 : 0) } : { display: 'none' }}>
+        <Typography variant='subheading' className={props.classes.setpointText}>
+          {`${numeral(props.setpointAdjusted).format('0.0')} °F`}
+        </Typography>
+        <LinearProgress variant='determinate' value={props.progress} />
+        <svg width='2' height='10' className={props.classes.setpointMark}>
+          <rect width='2' height='10' style={{ fill: props.theme.palette.secondary.main }} />
+        </svg>
+      </div>
+    </Card>
+  </Grid>
+)
 
 class Home extends React.Component {
-  state = {
-    temps: {
-      temp1: null, temp2: null, temp3: null
-    }
-  }
-  interval = null
-
   complete = (payload) => {
     this.props.completeStep(payload)
   }
 
-  componentDidMount = () => {
-    // Regularly poll the temperatures
-    this.getTemps()
-    this.interval = setInterval(() => this.getTemps(), 2000)
-  }
-
-  componentWillUnmount = () => {
-    clearInterval(this.interval)
-  }
-
-  getTemps = () => {
-    axios.get(`${qualUrl}/temperatures`).then(results => {
-      // console.log(results.data)
-      this.setState({ ...this.state, temps: results.data })
-    }).catch(err => console.log(err))
-  }
-
   render() {
-    const { theme, classes, recipe, steps } = this.props
-    const { temps } = this.state
+    const { theme, classes, recipe, settings, steps, temps, tempArray, startBrew } = this.props
 
     const srm = gradient(theme.colors.srm, 600)
     const recipeColor = srm[Math.min(numeral(recipe.est_color).value() * 10, 599)]
@@ -115,8 +126,10 @@ class Home extends React.Component {
 
     // Determine Temp Values
     const temperatures = Object.values(temps)
-    const tempKeys = Object.keys(temps)
-    const tempNames = tempKeys.filter((t,i,array) => temperatures[i] !== null)
+    const tempKeys = Object.keys(settings.temperatures).reduce((acc,val) => {
+      if (val.indexOf('thermistor') === 0) acc.push(settings.temperatures[val])
+      return acc
+    }, [])
     const tempArrayLength = temperatures.filter(t => t !== null).length
 
     return (
@@ -124,32 +137,40 @@ class Home extends React.Component {
         <Grid container spacing={24} direction='column'>
           <Grid item>
             <Grid container spacing={24}>
-              <Grid item xs={tempArrayLength > 0 ? 12/tempArrayLength : 12} style={temperatures[0] ? {} : { display: 'none' }}>
-                <Card className={classes.tempCard}>
-                  {temperatures[0]}
-                  <Typography variant='headline'>
-                    {tempNames[0] ? sensors[tempNames[0]] : ''}
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={tempArrayLength > 0 ? 12/tempArrayLength : 12} style={temperatures[1] ? {} : { display: 'none' }}>
-                <Card className={classes.tempCard}>
-                  {temperatures[1]}
-                  <Typography variant='headline'>
-                    {tempNames[1] ? sensors[tempNames[1]] : ''}
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={tempArrayLength > 0 ? 12/tempArrayLength : 12} style={temperatures[2] ? {} : { display: 'none' }}>
-                <Card className={classes.tempCard} style={theme.typography.tempFont}>
-                  {temperatures[2]}
-                  <Typography variant='headline'>
-                    {tempNames[2] ? sensors[tempNames[2]] : ''}
-                  </Typography>
+              {_.range(0,3).map((v,i) => {
+                var setpointAdjusted = i === 1
+                  ? recipe.activeStep && recipe.activeStep.setpoint + settings.rims.setpointAdjust
+                  : recipe.activeStep && recipe.activeStep.setpoint
+                var progress = (Math.max(Math.min(temperatures[i] - setpointAdjusted, 10), -10) + 10) / 20 * 100
+                return (
+                  <TempCard
+                    classes={classes}
+                    index={i}
+                    key={i}
+                    progress={progress}
+                    tempKeys={tempKeys}
+                    tempArrayLength={tempArrayLength}
+                    theme={theme}
+                    setpointBar={i !== 0 ||
+                      (i === 0 && recipe.activeStep && recipe.activeStep.title === 'Heat Strike Water') ||
+                      (i === 0 && recipe.activeStep && recipe.activeStep.title === 'Heat Sparge Water') ? true : false}
+                    setpointAdjusted={setpointAdjusted}
+                    step={recipe.activeStep}
+                    temperature={temperatures[i]}
+                  />
+                )
+              })}
+            </Grid>
+          </Grid>
+          {!_.isEqual(tempArray, []) && <Grid item>
+            <Grid container spacing={24}>
+              <Grid item xs={12}>
+                <Card className={classes.card}>
+                  <TempChart temps={tempArray} />
                 </Card>
               </Grid>
             </Grid>
-          </Grid>
+          </Grid>}
           <Grid item>
             <Grid container spacing={24}>
               <Grid item xs={12} sm={6}>
@@ -208,8 +229,23 @@ class Home extends React.Component {
                     </Card>
                   </Grid>
                   <Grid item>
-                    <Card className={classes.ingredientCard}>
+                    <Card className={classes.card}>
                       <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Steps</ListSubheader>}>
+                        {!recipe.startBrew && <Divider/>}
+                        {!recipe.startBrew &&
+                          <ListItem>
+                            <Button
+                              variant='contained'
+                              color='primary'
+                              className={classnames(classes.button, classes.startButton)}
+                              onClick={() => startBrew()}
+                            >
+                              Start Brew
+                              <PlayCircleOutlineIcon className={classes.icon} />
+                            </Button>
+                          </ListItem>
+                        }
+                        {!recipe.startBrew && <Divider/>}
                         <Stepper
                           activeStep={activeStep}
                           orientation='vertical'
@@ -219,12 +255,11 @@ class Home extends React.Component {
                               <Step key={step.id}>
                                 <StepLabel>{step.title}</StepLabel>
                                 <StepContent>
-                                  <Typography>{step.content}</Typography>
-                                  {step.todos ? (
+                                  {recipe.startBrew ? <Typography>{step.content}</Typography> : null}
+                                  {recipe.startBrew && step.todos ? (
                                     <FormControl component='fieldset'>
                                       <FormGroup style={{ padding: theme.spacing.unit * 2 }}>
-                                        {
-                                          step.todos.map((todo, index) => (
+                                        {step.todos.map((todo, index) => (
                                             <FormControlLabel
                                               key={todo.id}
                                               control={
@@ -327,9 +362,13 @@ Home.propTypes = {
 
 const mapStateToProps = (state) => ({
   recipe: state.recipe,
-  steps: state.recipe.steps
+  steps: state.recipe.steps,
+  temps: state.temperatures,
+  tempArray: state.temperatureArray,
+  settings: state.settings
 })
 
 export default withStyles(styles, { withTheme: true })(connect(mapStateToProps, {
-  completeStep
+  completeStep,
+  startBrew
 })(Home))
