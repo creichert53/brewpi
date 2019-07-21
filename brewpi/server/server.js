@@ -1,0 +1,282 @@
+const r = require('rethinkdb')
+const fs = require('fs')
+const cron = require('cron')
+const cors = require('cors')
+const http = require('http')
+const path = require('path')
+const socket = require('socket.io')
+const helmet = require('helmet')
+const uuidv4 = require('uuid/v4')
+const express = require('express')
+const moment = require('moment')
+const bodyParser = require('body-parser')
+const accurateInterval = require('accurate-interval')
+const Gpio = require('onoff').Gpio
+
+const thermistor = require('./helpers/thermistor')
+const Brew = require('./brew')
+const types = require('../src/Redux/types')
+
+const port = process.env.REACT_APP_SERVER_PORT || 3001
+
+const app = express()
+app.use(express.static(path.resolve(path.join(__dirname, '../', 'build'))))
+app.use(helmet())
+app.use(cors())
+app.use(bodyParser.json())
+
+// Define the IO
+var gpio = {
+  pump1: new Gpio(15, 'out'),
+  pump2: new Gpio(23, 'out'),
+  heat1: new Gpio(25, 'out'),
+  heat2: new Gpio(24, 'out'),
+  contactor1: new Gpio(14, 'out'),
+  contactor2: new Gpio(18, 'out'),
+  auto: {
+    pump1: 0,
+    pump2: 0,
+    heat1: 0,
+    heat2: 0,
+    contactor1: 0,
+    contactor2: 0
+  },
+  overrides: {}
+}
+
+const httpServer = http.createServer(app)
+const io = socket(httpServer, { origins: '*:*' })
+
+// Emit the temperatures
+const temp1 = new thermistor('temp1', 0)
+const temp2 = new thermistor('temp2', 1)
+const temp3 = new thermistor('temp3', 2)
+function Temperatures() {
+  this.value = {
+    temp1: null,
+    temp2: null,
+    temp3: null
+  }
+  this.array = []
+  this.addTemp = (stepId, timeInSeconds) => {
+    if (Object.values(this.value).reduce((acc,val) => acc += val === null ? 1 : 0, 0) !== 3) {
+      this.array.push({
+        id: uuidv4(),
+        step: stepId,
+        time: moment().add(500, 'ms').startOf('second').unix(),
+        brewTime: timeInSeconds,
+        ...this.value
+      })
+    }
+    var filterTime = moment().subtract(75, 'm').unix()
+    this.array = this.array.filter(val => val.time > filterTime)
+    this.array = this.array.slice(0,60000)
+  }
+  this.reset = () => {
+    this.array = []
+  }
+}
+var temperatures = new Temperatures()
+temp1.on('new temperature', temp => {
+  temperatures.value.temp1 = temp > 0 ? temp : null
+})
+temp2.on('new temperature', temp => {
+  temperatures.value.temp2 = temp > 0 ? temp : null
+})
+temp3.on('new temperature', temp => {
+  temperatures.value.temp3 = temp > 0 ? temp : null
+})
+setInterval(() => {
+  io.emit('new temperature', { ...temperatures.value })
+}, 1000)
+
+// Interval that will log the temperatures into the database
+const logInterval = () => {
+  if (logTempsInterval !== null) logTempsInterval.clear()
+  return accurateInterval(function(scheduledTime) {
+    console.log(scheduledTime)
+  }, 1000, { aligned: true, immediate: true })
+}
+
+// Get the initial store
+const store = (s) => {
+  this.value = s
+}
+r.connect({db: 'brewery'}).then(conn => {
+  r.table('store').get('store').coerceTo('object').run(conn).then(results => {
+    store.value = results
+    conn.close()
+  }).catch(err => {
+    conn.close()
+  })
+})
+
+// Serve static bundle
+app.get('/', (req, res) => {
+  res.sendFile(path.resolve(path.join(__dirname, '../', 'build', 'index.html')))
+})
+
+httpServer.listen(port, () => {
+  console.log(`HTTP Server is listening on port ${port}`)
+})
+
+// Create a brew-session
+var brew = null
+var logTempsInterval = null
+const initializeBrew = () => {
+  // If the brew has already been started, then start it back up
+  if (store.value.recipe.startBrew) {
+    brew.start()
+  }
+
+  // Initialize temperature logging
+  logTempsInterval = store.value.settings.temperatures.logTemperatures ? logInterval() : null
+}
+
+// Update the store on the server
+const updateStore = (st) => {
+  return new Promise(function(resolve, reject) {
+    r.connect({db: 'brewery'}).then(conn => {
+      const s = Object.assign({}, st)
+      s.id = 'store'
+      r.table('store').insert(s, { conflict: 'replace' }).run(conn).then(results => {
+        conn.close()
+        store.value = Object.assign({}, s)
+        io.emit('store initial state', store.value)
+        resolve()
+      }).catch(err => {
+        conn.close()
+        reject()
+      })
+    })
+  })
+}
+
+const getStoreFromDatabase = (initialize) => {
+  return new Promise(function(resolve, reject) {
+    r.connect({db: 'brewery'}).then(conn => {
+      r.table('store').get('store').coerceTo('object').run(conn).then(result => {
+        conn.close()
+        delete result.temperatureArray
+        store.value = result
+
+        // On the startup, initialize the brew session
+        if (initialize) {
+          brew = new Brew(io, store, temperatures, gpio, updateStore)
+          initializeBrew()
+        }
+
+        conn.close()
+        resolve()
+      }).catch(err => {
+        console.log(err)
+        conn.close()
+        reject()
+      })
+    })
+  })
+}
+getStoreFromDatabase(true).then(() => {
+  console.log('Brew initialized...')
+})
+
+io.on('connection', function (socket) {
+  console.log('Connected...')
+  getStoreFromDatabase().then(() => {
+    socket.emit('store initial state', store.value)
+  })
+
+  socket.on('disconnect', () => {
+    console.log('disconnected')
+  })
+
+  socket.on('action', (action) => {
+    if (action.type === types.NEW_RECIPE || action.type === types.COMPLETE_STEP || action.type === types.START_BREW) {
+      if (action.type === types.NEW_RECIPE) delete action.store.time
+      updateStore(action.store ? Object.assign({}, action.store, {
+        recipe: action.payload,
+        elements: {
+          boil: 0,
+          rims: 0
+        }
+      }, ) : store).then(() => {
+        // If a new recipe is uploaded, stop any previous brew sessions.
+        if (action.type === types.NEW_RECIPE) {
+          // Re-initialize a brew session
+          if (brew) brew.stop()
+          temperatures.reset()
+          io.emit('temp array', temperatures.array)
+          brew = new Brew(io, store, temperatures, gpio, updateStore)
+        }
+
+        // Start brew if button is pressed
+        if (action.type === types.START_BREW) {
+          initializeBrew()
+        }
+      }).catch(err => console.log(err))
+    }
+    if (action.type === types.SETTINGS) {
+      // If the log temperature setting has changed, update the interval.
+      if (action.payload.temperatures &&
+        store.value.settings.temperatures &&
+        action.payload.temperatures.logTemperatures !== store.value.settings.temperatures.logTemperatures) {
+        if (action.payload.temperatures.logTemperatures)
+          logTempsInterval = logInterval()
+        else
+          logTempsInterval.clear()
+      }
+      updateStore(action.store ? Object.assign({}, action.store, { settings: action.payload }) : store).catch(err => console.log(err))
+    }
+    if (action.type === types.CHART_WINDOW) {
+      var newStore = action.store ? Object.assign({}, action.store) : store
+      newStore.settings.temperatures.chartWindow = action.payload
+      updateStore(newStore).catch(err => console.log(err))
+
+      // send the client the new temperature array.
+      var filterTime = moment().subtract(store.value.settings && store.value.settings.temperatures.chartWindow, 'm').unix()
+      io.emit('temp array', temperatures.array.filter(val => val.time > filterTime))
+    }
+    if (action.type === types.UPDATE_OUTPUT) {
+      const outputs = action.store.io
+      outputs[action.index].value = action.payload
+      const newStore = action.store ? Object.assign({}, action.store, { io: outputs }) : store
+      updateStore(newStore).catch(err => console.log(err))
+
+      // Set the overrides object on gpio so all brew steps can take appropriate action
+      gpio.overrides = outputs.reduce((acc,output) => {
+        if (output.value !== 0) acc[output.name] = output
+        return acc
+      }, {})
+
+      // Initially set the gpio to their correct state
+      newStore.io && newStore.io.forEach(val => {
+        if (val.value !== 0) {
+          gpio[val.name].writeSync(val.value === -1 ? 0 : 1)
+        } else {
+          gpio[val.name].writeSync(gpio.auto[val.name])
+        }
+      })
+    }
+  })
+})
+
+process.once('SIGUSR2', function () {
+  process.kill(process.pid, 'SIGUSR2');
+})
+
+// free gpio resources
+process.on('SIGINT', function () {
+  console.log('SIGINT')
+  console.log('Freeing up GPIO resources')
+
+  try {
+    gpio.pump1.unexport()
+    gpio.pump2.unexport()
+    gpio.heat1.unexport()
+    gpio.heat2.unexport()
+    gpio.contactor1.unexport()
+    gpio.contactor2.unexport()
+  } catch (err) { console.log(err) }
+
+  process.exit()
+})
