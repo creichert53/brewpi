@@ -2,15 +2,17 @@ const path = require('path')
 
 const appRoot = path.resolve(__dirname)
 
+console.log(appRoot)
+
 // Options reference: https://pm2.io/doc/en/runtime/reference/ecosystem-file/
 module.exports = {
   apps : [
     {
       name: 'server',
-      script: '/srv/brewpi/server/server.js',
+      script: '/srv/brewpi/brewpi/server/server.js',
       instances: 1,
       autorestart: true,
-      watch: ['server'],
+      watch: ['/srv/brewpi/brewpi/server'],
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'development',
@@ -26,9 +28,20 @@ module.exports = {
       args: [
         '--color'
       ]
+    },
+    {
+      name: 'client',
+      cwd: '/srv/brewpi/brewpi',
+      script: 'npm',
+      args: 'start',
+      instances: 1,
+      max_memory_restart: '1G',
+      args: [
+        'start',
+        '--color'
+      ]
     }
   ],
-
   deploy : {
     production : {
       user : 'node',

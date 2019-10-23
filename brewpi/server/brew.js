@@ -3,6 +3,7 @@ var CronJob = require('cron').CronJob
 var timeFormat = require('../src/helpers/hhmmss')
 var noAction = require('./steps/noAction')
 var heat = require('./steps/heat')
+var chill = require('./steps/chill')
 var rest = require('./steps/rest')
 var restAndConfirm = require('./steps/restAndConfirm')
 var boil = require('./steps/boil')
@@ -48,7 +49,7 @@ module.exports = class Brew {
     this.storeJob = new CronJob({
       cronTime: '*/1 * * * * *',
       onTick: () => {
-        if (initCron || (this.store.value && !_.isEqual(
+        if (initCron || (this.store.value && !_.isEqual(this.store.value.recipe.activeStep, {complete: true}) && !_.isEqual(
           this.store.value.recipe && this.store.value.recipe.activeStep && this.store.value.recipe.activeStep.id,
           this.previousStore && this.previousStore.recipe.activeStep && this.previousStore.recipe.activeStep.id
         ))) {
@@ -84,6 +85,7 @@ module.exports = class Brew {
               case 'PREPARE_FOR_HTL_HEAT':
               case 'PREPARE_FOR_MASH_RECIRC':
               case 'PREPARE_FOR_BOIL':
+              case 'PREPARE_FOR_WORT_CHILL':
                 this.stepClass = new noAction({
                   activeStep: this.activeStep,
                   io: this.io,
@@ -103,6 +105,16 @@ module.exports = class Brew {
                   updateStore: updateStore,
                   pid: pidSettings,
                   time: this.time
+                })
+                break
+              case 'CHILLING':
+                this.stepClass = new chill({
+                  activeStep: this.activeStep,
+                  io: this.io,
+                  gpio: this.gpio,
+                  store: this.store,
+                  time: this.time,
+                  temperatures: temperatures
                 })
                 break
               case 'RESTING':
@@ -148,6 +160,10 @@ module.exports = class Brew {
 
           if (this.stepClass)
             this.stepClass.start()
+        } else if (_.isEqual(this.store.value.recipe.activeStep, {complete: true})) {
+          // brew is complete so shut everything off
+          this.end()
+          return // do not continue on
         } else {
           // set the active step every second which will be propagated to the step classes
           this.activeStep = this.store.value && this.store.value.recipe && this.store.value.recipe.activeStep && this.store.value.recipe.activeStep.id
@@ -155,8 +171,8 @@ module.exports = class Brew {
             : this.activeStep
         }
 
-        // If the brew has started count the timer up
-        if (this.store.value && this.store.value.recipe.startBrew) {
+        // If the brew has started and is not complete count the timer up
+        if (_.get(this.store, 'value.recipe.startBrew', false)) {
           this.totalTime += 1
         }
         this.time.setTotalTime(this.totalTime)
@@ -194,5 +210,11 @@ module.exports = class Brew {
     this.previousStore = null
     this.activeStep = null
     this.stepClass = null
+  }
+
+  end() {
+    // TODO Generate some sort of report so recipes can be compared.
+    // TODO Stop recording temperatures
+    this.stop()
   }
 }

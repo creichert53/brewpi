@@ -399,7 +399,7 @@ class Settings extends React.Component {
                   <TextField
                     id='setpoint'
                     value={settings.boil.setpoint === null ? 0 : settings.boil.setpoint}
-                    onChange={this.handleHeaterChange}
+                    onChange={this.handleBoilChange}
                     type='number'
                     className={classnames(classes.numberField, classes.field)}
                     InputProps={{

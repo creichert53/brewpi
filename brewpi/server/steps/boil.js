@@ -86,7 +86,7 @@ module.exports = class boil extends step {
 
     // Check complete
     this.checkComplete = () => {
-      if (this.options.objects && this.stepTimer >= this.recipe.boil_time * 60) {
+      if (this.stepTimer >= this.recipe.boil_time * 60) {
         this.completeStep()
       }
     }

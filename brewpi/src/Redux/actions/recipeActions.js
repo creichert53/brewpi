@@ -1,8 +1,6 @@
 import { NEW_RECIPE, COMPLETE_STEP, START_BREW, ADD_INGREDIENT } from '../types'
 
-import isEqual from 'lodash/isEqual'
-import trimEnd from 'lodash/trimEnd'
-import cloneDeep from 'lodash/cloneDeep'
+import { isEqual, trimEnd, cloneDeep, get } from 'lodash'
 
 import uuid from 'uuid/v4'
 import timeFormat from '../../helpers/hhmmss.js'
@@ -20,7 +18,9 @@ export const stepTypes = {
   RESTING: 'RESTING',
   SPARGE: 'SPARGE',
   PREPARE_FOR_BOIL: 'PREPARE_FOR_BOIL',
-  BOIL: 'BOIL'
+  BOIL: 'BOIL',
+  PREPARE_FOR_WORT_CHILL: 'PREPARE_FOR_WORT_CHILL',
+  CHILLING: 'CHILLING'
 }
 
 const readyForHotLiquorRecirc = (steps, step, todos) => {
@@ -100,7 +100,6 @@ export const formatRecipe = (recipe) => {
 
   /** MIDDLE STEPS FOR NON EXTRACT BREWS **/
   if (r.type !== 'Extract' && !isEqual(r.mash_steps, [])) {
-
 
     /** READY EQUIPMENT FOR STRIKE HEAT **/
     readyForHotLiquorRecirc(steps, 'Strike', [
@@ -263,57 +262,94 @@ export const formatRecipe = (recipe) => {
       type: stepTypes.SPARGE,
       complete: false
     })
-
-    /** READY EQUIPMENT FOR BOIL **/
-    steps.push({
-      id: uuid(),
-      title: 'Prepare for Boil',
-      content: 'Disconnect Mash Setup and Connect Chiller:',
-      todos: [
-        { step: `Close HLT outlet valve.`, complete: false, id: uuid() },
-        { step: `Ensure Mash Tun outlet valve is closed.`, complete: false, id: uuid() },
-        { step: `Disconnect pump inlet into a small bucket allowing liquid to empty from pump and tubing completely.`, complete: false, id: uuid() },
-        { step: `Disconnect connection from pump outlet to RIMS inlet after liquid has drained.`, complete: false, id: uuid() },
-        { step: `Connect from pump outlet to wort chiller inlet.`, complete: false, id: uuid() },
-        { step: `Connect from pump inlet to boil kettle ball valve.`, complete: false, id: uuid() },
-        { step: `Connect from wort chiller outlet to whirlpool bulkhead.`, complete: false, id: uuid() }
-      ],
-      complete: false,
-      type: stepTypes.PREPARE_FOR_BOIL
-    })
-
-    /** BRING THE WORT TO BOIL AND WAIT FOR CONFIRMATION **/
-    steps.push({
-      id: uuid(),
-      title: `Bring to Boil`,
-      content: `Bringing the Boil Kettle up to a rolling boil.`,
-      todos: [
-        { step: `Confirm when the boil kettle begins to boil.`, complete: false, id: uuid() },
-      ],
-      type: stepTypes.BOIL,
-      complete: false
-    })
-
-    /** BOIL FOR THE STEP DURATION **/
-    steps.push({
-      id: uuid(),
-      title: `Boil`,
-      content: `Boiling Wort`,
-      objects: [
-        ...((r.miscs ? r.miscs.filter(val => val.use === 'Boil') : []).map(
-          misc => { return { step: `${misc.display_amount} ${misc.name}`, complete: false, id: uuid() }}
-        )),
-        ...((r.hops ? r.hops.filter(val => (val.use === 'Boil')) : []).map(
-          fermentable => { return { step: `${fermentable.display_amount} ${fermentable.name}`, complete: false, id: uuid() }}
-        ))
-      ],
-      stepTime: r.boil_time, // minutes
-      type: stepTypes.BOIL,
-      complete: false
-    })
   }
 
+  /** READY EQUIPMENT FOR BOIL **/
+  steps.push({
+    id: uuid(),
+    title: 'Prepare for Boil',
+    content: `${!isEqual(r.mash_steps, []) ? 'Disconnect Mash Setup and ' : ''} Connect Chiller:`,
+    todos: [
+      { step: `Close HLT outlet valve.`, complete: false, id: uuid() },
+      { step: `Ensure Mash Tun outlet valve is closed.`, complete: false, id: uuid() },
+      { step: `Disconnect pump inlet into a small bucket allowing liquid to empty from pump and tubing completely.`, complete: false, id: uuid() },
+      { step: `Disconnect connection from pump outlet to RIMS inlet after liquid has drained.`, complete: false, id: uuid() },
+      { step: `Connect from pump outlet to wort chiller inlet.`, complete: false, id: uuid() },
+      { step: `Connect from pump inlet to boil kettle ball valve.`, complete: false, id: uuid() },
+      { step: `Connect from wort chiller outlet to whirlpool bulkhead.`, complete: false, id: uuid() }
+    ],
+    complete: false,
+    type: stepTypes.PREPARE_FOR_BOIL
+  })
+
+  /** BRING THE WORT TO BOIL AND WAIT FOR CONFIRMATION **/
+  steps.push({
+    id: uuid(),
+    title: `Bring to Boil`,
+    content: `Bringing the Boil Kettle up to a rolling boil.`,
+    todos: [
+      { step: `Connect garden hoses to the wort chiller inlet and outlet.`, complete: false, id: uuid() },
+      { step: `Connect the chiller inlet garden hose to the garden spigot.`, complete: false, id: uuid() },
+      { step: `Confirm when the boil kettle begins to boil.`, complete: false, id: uuid() }
+    ],
+    type: stepTypes.BOIL,
+    complete: false
+  })
+
+  /** BOIL FOR THE STEP DURATION **/
+  steps.push({
+    id: uuid(),
+    title: `Boil`,
+    content: `Boiling Wort`,
+    objects: [
+      ...((r.miscs ? r.miscs.filter(val => val.use === 'Boil') : []).map(
+        misc => { return { step: `${misc.display_amount} ${misc.name}`, complete: false, id: uuid() }}
+      )),
+      ...((r.hops ? r.hops.filter(val => (val.use === 'Boil')) : []).map(
+        fermentable => { return { step: `${fermentable.display_amount} ${fermentable.name}`, complete: false, id: uuid() }}
+      ))
+    ],
+    stepTime: r.boil_time, // minutes
+    type: stepTypes.BOIL,
+    complete: false
+  })
+
+  /** PREPARE FOR RECIRCULATING AND CHILLING **/
+  steps.push({
+    id: uuid(),
+    title: 'Prepare for Wort Chilling',
+    content: `Put valves in reciculating position and raise boil kettle:`,
+    todos: [
+      { step: `Open boil kettle outlet valve.`, complete: false, id: uuid() },
+      { step: `Ensure whirlpool bulkhead is in the 'recirculation' position.`, complete: false, id: uuid() },
+      { step: `Run tubing from whirlpool bulkhead 'carboy fill' outlet to carboy.`, complete: false, id: uuid() },
+      { step: `Raise boil kettle high enough to prime the pump.`, complete: false, id: uuid() }
+    ],
+    complete: false,
+    type: stepTypes.PREPARE_FOR_WORT_CHILL
+  })
+
+  /** RECIRCULATE THE WORT UNTIL COOL **/
+  var pitchTemp = Number(numeral(math.unit(
+    get(r, 'yeasts[0].DISP_MAX_TEMP', `${get(r, 'yeasts[0].MAX_TEMPERATURE', '21.1111')} C`).replace('F','degF').replace('C','degC')
+  ).toNumeric('degF')).subtract(2).format('0.0').valueOf())
+  steps.push({
+    id: uuid(),
+    title: `Chilling Wort`,
+    content: `Chilling Wort to ${pitchTemp} °F`,
+    todos: [
+      { step: `Confirm when outlet of counterflow chiller has reached ${pitchTemp} °F.`, complete: false, id: uuid() },
+      { step: `Open whirlpool bulkhead to direct the flow of wort into the fermentation vessel.`, complete: false, id: uuid() },
+      { step: `Confirm when ${r.display_batch_size} has been added to the fermenter.`, complete: false, id: uuid() }
+    ],
+    setpoint: pitchTemp,
+    complete: false,
+    type: stepTypes.CHILLING
+  })
+
   r.steps = steps
+
+  console.log(r)
 
   // because this is the initial upload, set the active step as the first step
   r.activeStep = steps[0]
