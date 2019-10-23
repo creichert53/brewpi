@@ -4,7 +4,7 @@ var moment = require('moment-timezone')
 var traverse = require('traverse')
 var accurateInterval = require('accurate-interval')
 
-var PID = require('../helpers/pid')
+var PID = require('../helpers/PID')
 var step = require('./__step')
 var CronJob = require('cron').CronJob
 

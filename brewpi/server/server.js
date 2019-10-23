@@ -22,7 +22,8 @@ const accurateInterval = require('accurate-interval')
 
 const Gpio = require('onoff').Gpio
 
-const thermistor = require('./helpers/thermistor')
+const Temperatures = require('./helpers/Temperatures')
+const Thermistor = require('./helpers/Thermistor')
 const Brew = require('./brew')
 const types = require('../src/Redux/types')
 
@@ -58,6 +59,20 @@ var gpio = {
 const httpServer = http.createServer(app)
 const io = socket(httpServer, { origins: '*:*' })
 
+// Emit any new temperatures inserted into the database up to all frontends
+r.connect({db: 'brewery'}).then(conn => {
+  r.table('temperatures').changes().run(conn).then(cursor => {
+    cursor.on('error', err => {
+      console.error(err)
+    })
+    cursor.on('data', data => {
+      if (data && data.new_val) {
+        io.emit('temp array', data.new_val)
+      }
+    })
+  })
+})
+
 // Execute a shell command from node
 function execute(command) {
   return new Promise((resolve, reject) => {
@@ -91,10 +106,9 @@ var uptime = () => {
 }
 
 // Emit the temperatures
-const temp1 = new thermistor('temp1', 0)
-const temp2 = new thermistor('temp2', 1)
-const temp3 = new thermistor('temp3', 2)
-
+const temp1 = new Thermistor('temp1', 0)
+const temp2 = new Thermistor('temp2', 1)
+const temp3 = new Thermistor('temp3', 2)
 var temperatures = new Temperatures()
 temp1.on('new temperature', temp => {
   temperatures.value.temp1 = temp > 0 ? temp : null

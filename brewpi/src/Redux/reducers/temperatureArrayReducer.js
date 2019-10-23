@@ -7,7 +7,7 @@ const initialState = []
 export default (state = initialState, action) => {
   switch(action.type){
     case UPDATE_TEMPERATURE_ARRAY:
-      return action.payload
+      return [ ...state ].push(action.payload)
     default:
       return state;
   }

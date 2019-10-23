@@ -1,11 +1,11 @@
-const _ = require('lodash')
 const r = require('rethinkdb')
+const moment = require('moment-timezone')
+const CronJob = require('cron').CronJob
 
 function Temperatures() {
   // keep track of the recipe
   this.recipeId = null
   this.setRecipeId = (recipeId) => {
-    console.log(recipeId)
     this.recipeId = recipeId
   }
   this.value = {
@@ -24,6 +24,7 @@ function Temperatures() {
           time: moment().add(500, 'ms').startOf('second').unix(),
           brewTime: timeInSeconds,
           complete: false,
+          unix: moment().valueOf(),
           ...this.value
         }).run(conn).finally(() => {
           conn.close()
@@ -31,4 +32,22 @@ function Temperatures() {
       })
     }
   }
+
+  // Clean up old Temp Values (> 24 hours old without a complete flag)
+  new CronJob({
+    cronTime: '0 0 * * * *',
+    onTick: () => {
+      r.connect({db: 'brewery'}).then(conn => {
+        r.table('temperatures')
+          .between([false, r.minval], [false, moment().subtract(1, 'day').valueOf()], { index: 'complete_time' })
+          .delete()
+          .run(conn)
+          .finally(() => {
+            conn.close()
+          })
+      })
+    },
+    runOnInit: true,
+    start: true
+  })
 }

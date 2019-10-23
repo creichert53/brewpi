@@ -1,12 +1,12 @@
 var _ = require('lodash')
 var CronJob = require('cron').CronJob
 var timeFormat = require('../src/helpers/hhmmss')
-var noAction = require('./steps/noAction')
-var heat = require('./steps/heat')
-var chill = require('./steps/chill')
-var rest = require('./steps/rest')
-var restAndConfirm = require('./steps/restAndConfirm')
-var boil = require('./steps/boil')
+var NoAction = require('./steps/NoAction')
+var Heat = require('./steps/Heat')
+var Chill = require('./steps/Chill')
+var Rest = require('./steps/Rest')
+var RestAndConfirm = require('./steps/RestAndConfirm')
+var Boil = require('./steps/Boil')
 
 // function that holds the overall time string
 function Time() {
@@ -86,7 +86,7 @@ module.exports = class Brew {
               case 'PREPARE_FOR_MASH_RECIRC':
               case 'PREPARE_FOR_BOIL':
               case 'PREPARE_FOR_WORT_CHILL':
-                this.stepClass = new noAction({
+                this.stepClass = new NoAction({
                   activeStep: this.activeStep,
                   io: this.io,
                   gpio: this.gpio,
@@ -96,7 +96,7 @@ module.exports = class Brew {
                 })
                 break
               case 'HEATING':
-                this.stepClass = new heat({
+                this.stepClass = new Heat({
                   activeStep: this.activeStep,
                   io: this.io,
                   gpio: this.gpio,
@@ -108,7 +108,7 @@ module.exports = class Brew {
                 })
                 break
               case 'CHILLING':
-                this.stepClass = new chill({
+                this.stepClass = new Chill({
                   activeStep: this.activeStep,
                   io: this.io,
                   gpio: this.gpio,
@@ -118,7 +118,7 @@ module.exports = class Brew {
                 })
                 break
               case 'RESTING':
-                this.stepClass = new rest({
+                this.stepClass = new Rest({
                   activeStep: this.activeStep,
                   io: this.io,
                   gpio: this.gpio,
@@ -132,7 +132,7 @@ module.exports = class Brew {
               case 'ADD_INGREDIENTS':
               case 'ADD_WATER_TO_MASH_TUN':
               case 'SPARGE':
-                this.stepClass = new restAndConfirm({
+                this.stepClass = new RestAndConfirm({
                   activeStep: this.activeStep,
                   io: this.io,
                   gpio: this.gpio,
@@ -144,7 +144,7 @@ module.exports = class Brew {
                 })
                 break
               case 'BOIL':
-                this.stepClass = new boil({
+                this.stepClass = new Boil({
                   activeStep: this.activeStep,
                   io: this.io,
                   gpio: this.gpio,

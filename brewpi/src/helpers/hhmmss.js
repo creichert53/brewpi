@@ -18,7 +18,7 @@ const TIME_FORMAT_ERRMSG = 'Time format error'
 // Export functions
 // =============================================================================
 
-function fromMs (ms, format = 'mm:ss') {
+function fromMs (ms, format) {
   if (typeof ms !== 'number' || Number.isNaN(ms)) {
     throw new Error('NaN error')
   }
@@ -33,21 +33,22 @@ function fromMs (ms, format = 'mm:ss') {
 
   return formatTime({
     negative, hours, minutes, seconds, miliseconds
-  }, format)
+  }, format || 'mm:ss')
 }
 
-function fromS (s, format = 'mm:ss') {
+function fromS (s, format) {
   if (typeof s !== 'number' || Number.isNaN(s)) {
     throw new Error('NaN error')
   }
 
   let ms = s * SECOND
 
-  return fromMs(ms, format)
+  return fromMs(ms, format || 'mm:ss')
 }
 
-function toMs (time, format = 'mm:ss') {
+function toMs (time, format) {
   let re
+  format = format || 'mm:ss'
 
   if (['mm:ss', 'mm:ss.sss', 'hh:mm:ss', 'hh:mm:ss.sss'].includes(format)) {
     re = /^(-)?(?:(\d\d+):)?(\d\d):(\d\d)(\.\d+)?$/
@@ -75,8 +76,8 @@ function toMs (time, format = 'mm:ss') {
   )
 }
 
-function toS (time, format = 'mm:ss') {
-  let ms = toMs(time, format)
+function toS (time, format) {
+  let ms = toMs(time, format || 'mm:ss')
   return Math.floor(ms / SECOND)
 }
 
