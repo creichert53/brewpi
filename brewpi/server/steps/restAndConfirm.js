@@ -11,7 +11,7 @@ var CronJob = require('cron').CronJob
  * no action taken by controller
  */
 
-module.exports = class sparge extends heat {
+module.exports = class RestAndConfirm extends heat {
   constructor(options) {
     super(options)
 

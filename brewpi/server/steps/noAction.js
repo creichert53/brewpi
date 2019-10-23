@@ -5,7 +5,7 @@ var CronJob = require('cron').CronJob
  * no action taken by controller
  */
 
-module.exports = class noAction extends step {
+module.exports = class NoAction extends step {
   constructor(options) {
     super(options)
 

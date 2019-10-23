@@ -11,7 +11,7 @@ var CronJob = require('cron').CronJob
  * no action taken by controller
  */
 
-module.exports = class rest extends heat {
+module.exports = class Rest extends heat {
   constructor(options) {
     super(options)
 
