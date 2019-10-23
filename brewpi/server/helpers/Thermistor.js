@@ -4,7 +4,7 @@ const numeral = require('numeral')
 const sma = require('moving-averages').sma
 const EventEmitter = require( 'events' )
 
-module.exports = class thermistor extends EventEmitter {
+module.exports = class Thermistor extends EventEmitter {
   constructor(name, sensorChannel) {
     super()
 

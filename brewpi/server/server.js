@@ -3,6 +3,7 @@ require('appmetrics-dash').monitor({
   port: 4000,
   title: 'Server'
 })
+const _ = require('lodash')
 const r = require('rethinkdb')
 const fs = require('fs')
 const CronJob = require('cron').CronJob
@@ -93,31 +94,7 @@ var uptime = () => {
 const temp1 = new thermistor('temp1', 0)
 const temp2 = new thermistor('temp2', 1)
 const temp3 = new thermistor('temp3', 2)
-function Temperatures() {
-  this.value = {
-    temp1: null,
-    temp2: null,
-    temp3: null
-  }
-  this.array = []
-  this.addTemp = (stepId, timeInSeconds) => {
-    if (Object.values(this.value).reduce((acc,val) => acc += val === null ? 1 : 0, 0) !== 3) {
-      this.array.push({
-        id: uuidv4(),
-        step: stepId,
-        time: moment().add(500, 'ms').startOf('second').unix(),
-        brewTime: timeInSeconds,
-        ...this.value
-      })
-    }
-    var filterTime = moment().subtract(75, 'm').unix()
-    this.array = this.array.filter(val => val.time > filterTime)
-    this.array = this.array.slice(0,60000)
-  }
-  this.reset = () => {
-    this.array = []
-  }
-}
+
 var temperatures = new Temperatures()
 temp1.on('new temperature', temp => {
   temperatures.value.temp1 = temp > 0 ? temp : null
@@ -225,11 +202,11 @@ waitOn({
       r.connect({db: 'brewery'}).then(conn => {
         r.table('store').get('store').coerceTo('object').run(conn).then(result => {
           conn.close()
-          delete result.temperatureArray
           store.value = result
 
           // On the startup, initialize the brew session
           if (initialize) {
+            temperatures.setRecipeId(_.get(store, 'value.recipe.id', null))
             brew = new Brew(io, store, temperatures, gpio, updateStore)
             initializeBrew()
           }
@@ -260,7 +237,12 @@ waitOn({
 
     socket.on('action', (action) => {
       if (action.type === types.NEW_RECIPE || action.type === types.COMPLETE_STEP || action.type === types.START_BREW) {
-        if (action.type === types.NEW_RECIPE) delete action.store.time
+        // remove the time object on a new recipe and set the recipe id for temperature logging
+        if (action.type === types.NEW_RECIPE) {
+          delete action.store.time
+          temperatures.setRecipeId(action.payload.id)
+        }
+
         updateStore(action.store ? Object.assign({}, action.store, {
           recipe: action.payload,
           elements: {
@@ -272,8 +254,6 @@ waitOn({
           if (action.type === types.NEW_RECIPE) {
             // Re-initialize a brew session
             if (brew) brew.stop()
-            temperatures.reset()
-            io.emit('temp array', temperatures.array)
             brew = new Brew(io, store, temperatures, gpio, updateStore)
           }
 
@@ -302,7 +282,6 @@ waitOn({
 
         // send the client the new temperature array.
         var filterTime = moment().subtract(store.value.settings && store.value.settings.temperatures.chartWindow, 'm').unix()
-        io.emit('temp array', temperatures.array.filter(val => val.time > filterTime))
       }
       if (action.type === types.UPDATE_OUTPUT) {
         const outputs = action.store.io

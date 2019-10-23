@@ -51,8 +51,6 @@ module.exports = class __step extends EventEmitter {
       cronTime: '*/2 * * * * *',
       onTick: () => {
         this.temperatures.addTemp(this.activeStep.id, timeFormat.toS(this.time.getValue().totalTime, 'hh:mm:ss'))
-        var filterTime = moment().subtract(that.store.value.settings && that.store.value.settings.temperatures.chartWindow, 'm').unix()
-        this.io.emit('temp array', this.temperatures.array.filter(val => val.time > filterTime))
       },
       start: true,
       timeZone: 'America/New_York',
