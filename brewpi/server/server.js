@@ -164,6 +164,7 @@ waitOn({
   r.connect({db: 'brewery'}).then(conn => {
     r.table('store').get('store').coerceTo('object').run(conn).then(results => {
       store.value = results
+
       conn.close()
     }).catch(err => {
       conn.close()
@@ -215,18 +216,27 @@ waitOn({
     return new Promise(function(resolve, reject) {
       r.connect({db: 'brewery'}).then(conn => {
         r.table('store').get('store').coerceTo('object').run(conn).then(result => {
-          conn.close()
           store.value = result
+          const recipeId = _.get(store, 'value.recipe.id', null)
 
           // On the startup, initialize the brew session
           if (initialize) {
-            temperatures.setRecipeId(_.get(store, 'value.recipe.id', null))
+            temperatures.setRecipeId(recipeId)
             brew = new Brew(io, store, temperatures, gpio, updateStore)
             initializeBrew()
           }
 
+          return r.table('temperatures')
+            .between([recipeId || '', false, r.minval], [recipeId || '', false, r.maxval], { index: 'recipe_complete_time' })
+            .orderBy({ index: 'recipe_complete_time' })
+            .coerceTo('array')
+            .run(conn)
+        }).then(temperatureArray => {
           conn.close()
-          resolve()
+          resolve({
+            store: store,
+            temperatureArray: _.takeRight(temperatureArray, 30 * 60)
+          })
         }).catch(err => {
           console.log(err)
           conn.close()
@@ -241,8 +251,10 @@ waitOn({
 
   io.on('connection', function (socket) {
     console.log('Connected...')
-    getStoreFromDatabase().then(() => {
-      socket.emit('store initial state', store.value)
+    io.emit('clear temp array')
+    getStoreFromDatabase().then(results => {
+      socket.emit('store initial state', results.store.value)
+      socket.emit('temp array', results.temperatureArray)
     })
 
     socket.on('disconnect', () => {
@@ -255,6 +267,20 @@ waitOn({
         if (action.type === types.NEW_RECIPE) {
           delete action.store.time
           temperatures.setRecipeId(action.payload.id)
+
+          // remove any temperatures from the database that are not complete
+          r.connect({db: 'brewery'}).then(conn => {
+            r.table('temperatures')
+              .between([false, r.minval], [false, r.maxval], { index: 'complete_time' })
+              .delete()
+              .run(conn)
+              .finally(() => {
+                conn.close()
+              })
+          })
+
+          // notify the frontend to clear it's temperature array
+          io.emit('clear temp array')
         }
 
         updateStore(action.store ? Object.assign({}, action.store, {

@@ -214,7 +214,17 @@ module.exports = class Brew {
 
   end() {
     // TODO Generate some sort of report so recipes can be compared.
-    // TODO Stop recording temperatures
+    // set the temperatures complete property to true for this recipe
+    const recipeId = get(this.store, 'value.recipe.id', '')
+    r.connect({db: 'brewery'}).then(conn => {
+      r.table('temperatures')
+        .between([recipeId, false, r.minval], [recipeId, false, r.maxval], { index: 'recipe_complete_time' })
+        .update({ complete: true })
+        .run(conn)
+        .finally(() => {
+          conn.close()
+        })
+    })
     this.stop()
   }
 }

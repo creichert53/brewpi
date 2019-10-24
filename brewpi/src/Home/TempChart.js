@@ -19,7 +19,7 @@ import {
 class TempChart extends React.Component {
   render() {
     const { temps, theme, settings } = this.props
-
+    console.log(temps)
     return (
       <div style={{ flex: 1, height: 300 }}>
         <ResponsiveContainer width='100%' height={300}>
