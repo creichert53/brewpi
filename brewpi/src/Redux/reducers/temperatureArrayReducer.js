@@ -15,8 +15,7 @@ export default (state = initialState, action) => {
       return initialState
     case UPDATE_TEMPERATURE_ARRAY:
       // Return the 30 most recent minutes of data
-      console.log(state)
-      return takeRight(cloneDeep(state).concat(typeof action.payload === 'array' ? action.payload : [action.payload]), 30 * 60)
+      return takeRight(cloneDeep(state).concat(Array.isArray(action.payload) ? action.payload : [action.payload]), 30 * 60)
     default:
       return state;
   }

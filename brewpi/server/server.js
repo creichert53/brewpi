@@ -26,6 +26,7 @@ const Temperatures = require('./helpers/Temperatures')
 const Thermistor = require('./helpers/Thermistor')
 const Brew = require('./brew')
 const types = require('../src/Redux/types')
+const dbFunctions = require('./database/functions')
 
 const get = require('lodash.get')
 
@@ -226,11 +227,7 @@ waitOn({
             initializeBrew()
           }
 
-          return r.table('temperatures')
-            .between([recipeId || '', false, r.minval], [recipeId || '', false, r.maxval], { index: 'recipe_complete_time' })
-            .orderBy({ index: 'recipe_complete_time' })
-            .coerceTo('array')
-            .run(conn)
+          return dbFunctions.getRecipeTemps(recipeId)
         }).then(temperatureArray => {
           conn.close()
           resolve({
@@ -262,22 +259,18 @@ waitOn({
     })
 
     socket.on('action', (action) => {
+      // do not save the temperature array to the database
+      console.log(action.type)
+      if (_.get(action, 'store.temperatureArray', false)) 
+        delete actions.store.temperatureArray
+
       if (action.type === types.NEW_RECIPE || action.type === types.COMPLETE_STEP || action.type === types.START_BREW) {
         // remove the time object on a new recipe and set the recipe id for temperature logging
         if (action.type === types.NEW_RECIPE) {
           delete action.store.time
           temperatures.setRecipeId(action.payload.id)
 
-          // remove any temperatures from the database that are not complete
-          r.connect({db: 'brewery'}).then(conn => {
-            r.table('temperatures')
-              .between([false, r.minval], [false, r.maxval], { index: 'complete_time' })
-              .delete()
-              .run(conn)
-              .finally(() => {
-                conn.close()
-              })
-          })
+          dbFunctions.removeIncompleteTemps()
 
           // notify the frontend to clear it's temperature array
           io.emit('clear temp array')

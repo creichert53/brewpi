@@ -74,7 +74,6 @@ socket.on('new temperature', temps => {
   })
 })
 socket.on('clear temp array', () => {
-  console.log('clearing array')
   store.dispatch({
     type: types.CLEAR_TEMPERATURE_ARRAY
   })

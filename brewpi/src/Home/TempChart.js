@@ -18,12 +18,11 @@ import {
 
 class TempChart extends React.Component {
   render() {
-    const { temps, theme, settings } = this.props
-    console.log(temps)
+    const { tempArray, theme, settings } = this.props
     return (
       <div style={{ flex: 1, height: 300 }}>
         <ResponsiveContainer width='100%' height={300}>
-          <LineChart data={temps} margin={{top: 5, right: 5, bottom: 3, left: -20}}>
+          <LineChart data={tempArray} margin={{top: 5, right: 5, bottom: 3, left: -20}}>
             <XAxis
               dataKey='brewTime'
               domain={['auto', 'auto']}
@@ -79,7 +78,8 @@ TempChart.propTypes = {
 }
 
 const mapStateToProps = (state) => ({
-  settings: state.settings.temperatures
+  settings: state.settings.temperatures,
+  tempArray: state.temperatureArray,
 })
 
 export default withStyles(null, { withTheme: true })(connect(mapStateToProps, {

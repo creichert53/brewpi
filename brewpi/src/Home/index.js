@@ -252,7 +252,7 @@ class Home extends React.Component {
                       <MenuItem onClick={() => this.handleChartWindowSelectClose(30)}>30 minutes</MenuItem>
                     </MenuList>
                   </Popover>
-                  <TempChart temps={tempArray} />
+                  <TempChart />
                 </Card>
               </Grid>
             </Grid>
@@ -451,7 +451,6 @@ const mapStateToProps = (state) => ({
   recipe: state.recipe,
   steps: state.recipe.steps,
   temps: state.temperatures,
-  tempArray: state.temperatureArray,
   settings: state.settings,
   time: state.time
 })
