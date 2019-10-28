@@ -53,20 +53,20 @@ const styles = theme => ({
     flexGrow: 1,
   },
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit,
-    marginBottom: theme.spacing.unit,
+    marginTop: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    marginBottom: theme.spacing(1),
   },
   startButton: {
     marginRight: 'auto',
     marginLeft: 'auto'
   },
   card: {
-    padding: theme.spacing.unit * 2,
+    padding: theme.spacing(2),
     color: theme.palette.text.secondary,
   },
   tempCard: {
-    padding: theme.spacing.unit * 2,
+    padding: theme.spacing(2),
     color: theme.palette.text.secondary,
     minWidth: 250,
     textAlign: 'center',
@@ -76,11 +76,11 @@ const styles = theme => ({
     fontSize: '100px'
   },
   ingredientCard: {
-    paddingTop: theme.spacing.unit * 2,
-    paddingBottom: theme.spacing.unit * 2,
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
   },
   icon: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(1),
     fontSize: 32,
   },
   setpointMark: {
@@ -91,9 +91,9 @@ const styles = theme => ({
     dropShadow: theme.shadows[10]
   },
   setpointText: {
-    paddingLeft: theme.spacing.unit * 2,
-    paddingRight: theme.spacing.unit * 2,
-    paddingBottom: theme.spacing.unit
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+    paddingBottom: theme.spacing(1)
   },
   row: {
     display: 'table',
@@ -105,7 +105,7 @@ const styles = theme => ({
     display: 'table-cell'
   },
   leftIcon: {
-    marginRight: theme.spacing.unit,
+    marginRight: theme.spacing(1),
   },
   cornerColor: {
     float: 'right',
@@ -228,7 +228,7 @@ class Home extends React.Component {
                         Window
                       </Button>
                     }
-                    title={<Typography gutterBottom style={{ marginRight: theme.spacing.unit * 3 }} align='right' variant='h6'>
+                    title={<Typography gutterBottom style={{ marginRight: theme.spacing(3) }} align='right' variant='h6'>
                       {`${settings.temperatures.chartWindow} mins`}
                     </Typography>}
                   />
@@ -344,7 +344,7 @@ class Home extends React.Component {
                                   {recipe.startBrew ? <Typography variant='subtitle2'>{step.content}</Typography> : null}
                                   {recipe.startBrew && step.todos ? (
                                     <FormControl component='fieldset'>
-                                      <FormGroup style={{ padding: theme.spacing.unit * 2 }}>
+                                      <FormGroup style={{ padding: theme.spacing(2) }}>
                                         {step.todos.map((todo, index) => (
                                             <FormControlLabel
                                               key={todo.id}
@@ -384,7 +384,7 @@ class Home extends React.Component {
               <Grid item xs={12} sm={6}>
                 <Card className={classes.card}>
                   <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Ingredients</ListSubheader>}>
-                    <div style={{ height: theme.spacing.unit * 2 }}/>
+                    <div style={{ height: theme.spacing(2) }}/>
                     {recipe.waters && <Divider/>}
                     {recipe.waters && <List subheader={<ListSubheader component='div'>Water</ListSubheader>}>
                       {recipe.waters && recipe.waters.map(ingredient => (
