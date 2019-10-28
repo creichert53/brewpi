@@ -44,17 +44,17 @@ const styles = theme => ({
   },
   fab: {
     position: 'absolute',
-    bottom: theme.spacing.unit * 2,
-    right: theme.spacing.unit * 2,
+    bottom: theme.spacing(2),
+    right: theme.spacing(2),
   },
   formControl: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(1),
     minWidth: 120,
   },
   field: {
-    marginTop: theme.spacing.unit,
-    marginLeft: theme.spacing.unit,
-    marginRight: theme.spacing.unit,
+    marginTop: theme.spacing(1),
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
   },
   numberField: {
     width: 120,
@@ -73,7 +73,7 @@ const styles = theme => ({
     transform: 'rotate(180deg)',
   },
   extendedIcon: {
-    marginRight: theme.spacing.unit,
+    marginRight: theme.spacing(1),
   }
 })
 

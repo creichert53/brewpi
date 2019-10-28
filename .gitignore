@@ -62,4 +62,5 @@ typings/
 .next
 
 # Mac cloud backup
-*/.DS_Store
+.DS_Store
+.DS_Store
