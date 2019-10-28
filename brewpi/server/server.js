@@ -262,7 +262,7 @@ waitOn({
       // do not save the temperature array to the database
       console.log(action.type)
       if (_.get(action, 'store.temperatureArray', false)) 
-        delete actions.store.temperatureArray
+        delete action.store.temperatureArray
 
       if (action.type === types.NEW_RECIPE || action.type === types.COMPLETE_STEP || action.type === types.START_BREW) {
         // remove the time object on a new recipe and set the recipe id for temperature logging

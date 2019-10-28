@@ -40,6 +40,13 @@ module.exports = {
         'start',
         '--color'
       ]
+    },
+    {
+      name: 'database',
+      script: '/srv/brewpi/rethinkdb/index.js',
+      autorestart: false,
+      instances: 1,
+      max_memory_restart: '2G'
     }
   ],
   deploy : {

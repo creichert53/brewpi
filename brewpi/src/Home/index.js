@@ -451,6 +451,7 @@ const mapStateToProps = (state) => ({
   recipe: state.recipe,
   steps: state.recipe.steps,
   temps: state.temperatures,
+  tempArray: state.temperatureArray,
   settings: state.settings,
   time: state.time
 })
