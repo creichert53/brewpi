@@ -125,7 +125,7 @@ const ThermistorCalibartionListItem = props => (
         <Card className={props.classes.listItemText} elevation={5}>
           <List subheader={<ListSubheader component='div'>Calibration</ListSubheader>}>
             <ListItem>
-              <Grid container spacing={24}>
+              <Grid container spacing={2}>
                 {thermistorSettings.map((setting,i) =>
                   <ThermistorSetting
                     key={i}
@@ -139,7 +139,7 @@ const ThermistorCalibartionListItem = props => (
               </Grid>
             </ListItem>
             <ListItem>
-              <Grid container spacing={24}>
+              <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
                   <TextField
                     id='name'
@@ -261,7 +261,7 @@ class Settings extends React.Component {
 
     return (
       <div className={classes.root}>
-        <Grid container spacing={24} direction='column'>
+        <Grid container spacing={2} direction='column'>
           <Grid item xs>
             <Card>
               <List

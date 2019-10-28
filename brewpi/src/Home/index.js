@@ -161,9 +161,9 @@ class Home extends React.Component {
 
     return (
       <div>
-        <Grid container spacing={24} direction='column'>
+        <Grid container spacing={2} direction='column'>
           <Grid item>
-            <Grid container spacing={24}>
+            <Grid container spacing={2}>
               {temperatures.map((v,i) => {
                 v.setpointAdjusted = v.useSetpointAdjust
                   ? recipe.activeStep && recipe.activeStep.setpoint + settings.rims.setpointAdjust
@@ -212,7 +212,7 @@ class Home extends React.Component {
             </Grid>
           </Grid>
           {!isEqual(tempArray, []) && <Grid item>
-            <Grid container spacing={24}>
+            <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Card className={classes.card}>
                   <CardHeader
@@ -258,9 +258,9 @@ class Home extends React.Component {
             </Grid>
           </Grid>}
           <Grid item>
-            <Grid container spacing={24}>
+            <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Grid container spacing={24} direction='column'>
+                <Grid container spacing={2} direction='column'>
                   <Grid item>
                     <Card className={classes.card}>
                       <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Recipe</ListSubheader>}>

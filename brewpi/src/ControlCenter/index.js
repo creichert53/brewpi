@@ -68,7 +68,7 @@ class ControlCenter extends React.Component {
     const { classes, outputs } = this.props
     return (
       <div className={classes.root}>
-        <Grid container spacing={24} direction='column'>
+        <Grid container spacing={2} direction='column'>
           <Grid item xs>
             <Card>
               <List
