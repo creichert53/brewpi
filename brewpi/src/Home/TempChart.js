@@ -24,7 +24,7 @@ class TempChart extends React.Component {
         <ResponsiveContainer width='100%' height={300}>
           <LineChart data={tempArray} margin={{top: 5, right: 5, bottom: 3, left: -20}}>
             <XAxis
-              dataKey='brewTime'
+              dataKey='totalTime'
               domain={['auto', 'auto']}
               name='Time'
               tickFormatter={(time) => timeFormat.fromS(time, 'hh:mm:ss').split(':').reduce((acc,val,i) => {

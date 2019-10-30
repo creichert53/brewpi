@@ -78,7 +78,6 @@ export const formatRecipe = (recipe) => {
   // separate the recipe into steps
   /** STRIKE WATER **/
   var steps = []
-  console.log(r)
   steps.push({
     id: uuid(),
     title: r.type === 'Extract' ? 'Water Addition' : 'Strike Water',
@@ -348,8 +347,6 @@ export const formatRecipe = (recipe) => {
   })
 
   r.steps = steps
-
-  console.log(r)
 
   // because this is the initial upload, set the active step as the first step
   r.activeStep = steps[0]

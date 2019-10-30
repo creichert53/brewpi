@@ -27,7 +27,7 @@ function Time() {
 }
 
 module.exports = class Brew {
-  constructor(io, store, temperatures, gpio, updateStore) {
+  constructor(io, store, temperatures, gpio, updateStore, temperatureArray) {
     // construct the variables for the brew session
     this.io = io
     this.store = store
@@ -37,9 +37,12 @@ module.exports = class Brew {
     this.stepClass = null
 
     // total time
-    this.totalTime = 0
+    var recentTemp = _.last(temperatureArray)
+    this.totalTime = _.get(recentTemp, 'totalTime', 0)
     this.time = new Time()
     this.time.setTotalTime(this.totalTime)
+    this.time.setStepTime(_.get(recentTemp, 'stepTime', 0))
+    this.time.setRemainingTime(_.get(recentTemp, 'remainingTime', 0))
 
     var initCron = true
 
@@ -216,15 +219,7 @@ module.exports = class Brew {
     // TODO Generate some sort of report so recipes can be compared.
     // set the temperatures complete property to true for this recipe
     const recipeId = get(this.store, 'value.recipe.id', '')
-    r.connect({db: 'brewery'}).then(conn => {
-      r.table('temperatures')
-        .between([recipeId, false, r.minval], [recipeId, false, r.maxval], { index: 'recipe_complete_time' })
-        .update({ complete: true })
-        .run(conn)
-        .finally(() => {
-          conn.close()
-        })
-    })
+    dbFunctions.completeTimeData(recipeId)
     this.stop()
   }
 }

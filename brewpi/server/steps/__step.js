@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const timeFormat = require('../../src/helpers/hhmmss.js')
 const moment = require('moment-timezone')
 
@@ -28,7 +29,10 @@ module.exports = class __step extends EventEmitter {
     this.isRunning = false
 
     // Timer variables
-    this.stepTimer = 0
+    const times = this.time.getValue()
+    this.stepTimer = _.get(this.time.getValue(), 'stepTime', false)
+      ? timeFormat.toS(this.time.getValue().stepTime, 'hh:mm:ss')
+      : 0
     this.stepTimerJob = null
 
     var that = this
@@ -50,7 +54,13 @@ module.exports = class __step extends EventEmitter {
     this.tempTimerJob = new CronJob({
       cronTime: '*/2 * * * * *',
       onTick: () => {
-        this.temperatures.addTemp(this.activeStep.id, timeFormat.toS(this.time.getValue().totalTime, 'hh:mm:ss'))
+        const times = this.time.getValue()
+        this.temperatures.addTemp({
+          stepId: this.activeStep.id,
+          totalTime: _.get(times, 'totalTime', false) ? timeFormat.toS(this.time.getValue().totalTime, 'hh:mm:ss') : null,
+          stepTime: _.get(times, 'stepTime', false) ? timeFormat.toS(this.time.getValue().stepTime, 'hh:mm:ss') : null,
+          remainingTime: _.get(times, 'remainingTime', false) ? timeFormat.toS(this.time.getValue().remainingTime, 'hh:mm:ss') : null,
+        })
       },
       start: true,
       timeZone: 'America/New_York',

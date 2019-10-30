@@ -8,6 +8,7 @@ const muiTheme = createMuiTheme({
   typography: {
     fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
     titleFont: {
+      color: 'black',
       fontSize: '2rem',
       textTransform: 'uppercase',
       fontWeight: 500,

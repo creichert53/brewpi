@@ -41,7 +41,7 @@ class TempTooltip extends React.Component {
               <ListItem>
                 <ListItemText
                   style={{ color: 'black' }}
-                  primary={payload && !isEqual(payload, []) ? timeFormat.fromS(payload[0].payload.brewTime, 'hh:mm:ss') : null}
+                  primary={payload && !isEqual(payload, []) ? timeFormat.fromS(payload[0].payload.totalTime, 'hh:mm:ss') : null}
                   secondary={payload && !isEqual(payload, []) ? moment.tz(payload[0].payload.time * 1000, 'America/New_York').format('h:mm:ss A') : null}
                 />
               </ListItem>

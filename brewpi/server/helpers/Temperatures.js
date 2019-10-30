@@ -18,13 +18,12 @@ module.exports = class Temperatures {
     }
 
     // record a new temperature in the database
-    this.addTemp = (stepId, timeInSeconds) => {
+    this.addTemp = (options) => {
       if (this.recipeId && Object.values(this.value).reduce((acc,val) => acc += val === null ? 1 : 0, 0) !== 3) {
         dbFunctions.insertTime({
-          stepId: stepId,
-          timeInSeconds: timeInSeconds,
+          ...options,
           recipeId: this.recipeId,
-          temps: this.value
+          ...this.value
         })
       }
     }
@@ -33,7 +32,7 @@ module.exports = class Temperatures {
     new CronJob({
       cronTime: '0 0 * * * *',
       onTick: () => {
-        dbFunctions.completeTimeData()
+        dbFunctions.removeStaleTimeData()
       },
       runOnInit: true,
       start: true

@@ -28,6 +28,7 @@ import Switch from '@material-ui/core/Switch'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 
+import get from 'lodash/get'
 import isNumber from 'lodash/isNumber'
 import numeral from 'numeral'
 
@@ -156,7 +157,7 @@ const ThermistorCalibartionListItem = props => (
                     control={
                       <Checkbox
                         id='useSetpointAdjust'
-                        checked={props.temperatures[props.id].useSetpointAdjust || false}
+                        checked={get(props, `temperatures.${props.id}.useSetpointAdjust`, false)}
                         onChange={props.handleThermistorChange(props.id)}
                         value='useSetpointAdjust'
                       />
@@ -272,7 +273,7 @@ class Settings extends React.Component {
                   <ListItemText className={classes.listItemText} primary='Log Temperatures' />
                   <Switch
                     name='logTemperatures'
-                    checked={settings.temperatures.logTemperatures || ''}
+                    checked={get(settings, 'temperatures.logTemperatures', false)}
                     onChange={this.handleTempChange}
                   />
                 </ListItem>

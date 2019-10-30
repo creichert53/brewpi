@@ -4,7 +4,7 @@ var moment = require('moment-timezone')
 var traverse = require('traverse')
 
 var PID = require('../helpers/PID')
-var heat = require('./heat')
+var heat = require('./Heat')
 var CronJob = require('cron').CronJob
 
 /**

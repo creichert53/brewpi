@@ -10,13 +10,13 @@ const CronJob = require('cron').CronJob
 const cors = require('cors')
 const http = require('http')
 const path = require('path')
-const exec = require('child_process').exec
 const socket = require('socket.io')
 const helmet = require('helmet')
 const uuidv4 = require('uuid/v4')
 const express = require('express')
 const moment = require('moment')
 const waitOn = require('wait-on')
+const cloneDeep = require('lodash/cloneDeep')
 const bodyParser = require('body-parser')
 const accurateInterval = require('accurate-interval')
 
@@ -29,6 +29,9 @@ const types = require('../src/Redux/types')
 const dbFunctions = require('./database/functions')
 
 const get = require('lodash.get')
+
+// load up the uptime script that will log any reboots of the server
+require('./helpers/uptime')
 
 const port = process.env.REACT_APP_SERVER_PORT || 3001
 
@@ -60,51 +63,8 @@ var gpio = {
 const httpServer = http.createServer(app)
 const io = socket(httpServer, { origins: '*:*' })
 
-// Emit any new temperatures inserted into the database up to all frontends
-r.connect({db: 'brewery'}).then(conn => {
-  r.table('temperatures').changes().run(conn).then(cursor => {
-    cursor.on('error', err => {
-      console.error(err)
-    })
-    cursor.on('data', data => {
-      if (data && data.new_val) {
-        io.emit('temp array', data.new_val)
-      }
-    })
-  })
-})
-
-// Execute a shell command from node
-function execute(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, function(error, stdout, stderr) {
-      if (error) reject(stderr)
-      else resolve(stdout)
-    })
-  })
-}
-
-// Get an object with raspberry pi uptime. We want to update the database every time the pi is rebooted.
-var uptime = () => {
-  return new Promise((resolve, reject) => {
-    Promise.all([execute('uptime -s'), execute('uptime')]).then(result => {
-      var now = moment.tz('America/New_York')
-      var time = moment(result[0], 'YYYY-MM-DD HH:mm:ss').tz('America/New_York')
-      var ms = moment(now,"DD/MM/YYYY HH:mm:ss").diff(moment(time,"DD/MM/YYYY HH:mm:ss"))
-      var d = moment.duration(ms)
-      var days = Math.floor(d.asDays())
-      var s = `${days === 1 ? '1 day, ' : days > 1 ? days + ' days, ' : ''}${Math.floor(d.asHours() - 24 * days) + moment.utc(ms).format(":mm:ss")}`
-
-      resolve({
-        unix: time.unix(),
-        time: time.toString(),
-        id: time.format('YYYY-MM-DD h:mm:ss A'),
-        detail: result[1].trim().replace(/(\r\n|\n|\r)/gm, ""),
-        uptime: s
-      })
-    })
-  })
-}
+// Start a changefeed to emit temperatures to the frontend
+dbFunctions.emitTemperatures(io)
 
 // Emit the temperatures
 const temp1 = new Thermistor('temp1', 0)
@@ -134,22 +94,6 @@ waitOn({
    *  IMPORTANT: the database must be open for this server to work
    */
 
-  // Keep track of uptime
-  new CronJob({
-    cronTime: '* * * * * *',
-    onTick: () => {
-      r.connect({db: 'brewery'}).then(conn => {
-        uptime().then(result => {
-          r.table('reboots').insert(result, {conflict: 'replace'}).run(conn).finally(results => {
-            conn.close()
-          })
-        })
-      })
-    },
-    runOnInit: true,
-    start: true
-  })
-
   // Interval that will log the temperatures into the database
   const logInterval = () => {
     if (logTempsInterval !== null) logTempsInterval.clear()
@@ -162,15 +106,7 @@ waitOn({
   const store = (s) => {
     this.value = s
   }
-  r.connect({db: 'brewery'}).then(conn => {
-    r.table('store').get('store').coerceTo('object').run(conn).then(results => {
-      store.value = results
-
-      conn.close()
-    }).catch(err => {
-      conn.close()
-    })
-  })
+  dbFunctions.getStoreFromDatabase().then(result => store.value = result.store)
 
   // Serve static bundle
   app.get('/', (req, res) => {
@@ -181,10 +117,21 @@ waitOn({
     console.log(`HTTP Server is listening on port ${port}`)
   })
 
+  const emitStore = (s) => {
+    store.value = cloneDeep(s)
+    io.emit('store initial state', store.value)
+  }
+
   // Create a brew-session
   var brew = null
   var logTempsInterval = null
-  const initializeBrew = () => {
+  const initializeBrew = (tempArray) => {
+    // Re-initialize a brew session
+    if (brew) brew.stop()
+    brew = new Brew(io, store, temperatures, gpio, (st) => {
+      dbFunctions.updateStore(st).then(s => emitStore(s))
+    }, tempArray || [])
+
     // If the brew has already been started, then start it back up
     if (get(store.value, 'recipe.startBrew', false)) {
       brew.start()
@@ -194,63 +141,20 @@ waitOn({
     logTempsInterval = get(store.value, 'settings.temperatures.logTemperatures', false) ? logInterval() : null
   }
 
-  // Update the store on the server
-  const updateStore = (st) => {
-    return new Promise(function(resolve, reject) {
-      r.connect({db: 'brewery'}).then(conn => {
-        const s = Object.assign({}, st)
-        s.id = 'store'
-        r.table('store').insert(s, { conflict: 'replace' }).run(conn).then(results => {
-          conn.close()
-          store.value = Object.assign({}, s)
-          io.emit('store initial state', store.value)
-          resolve()
-        }).catch(err => {
-          conn.close()
-          reject()
-        })
-      })
-    })
-  }
+  dbFunctions.getStoreFromDatabase().then(results => {
+    store.value = results.store
 
-  const getStoreFromDatabase = (initialize) => {
-    return new Promise(function(resolve, reject) {
-      r.connect({db: 'brewery'}).then(conn => {
-        r.table('store').get('store').coerceTo('object').run(conn).then(result => {
-          store.value = result
-          const recipeId = _.get(store, 'value.recipe.id', null)
+    // On the startup, initialize the brew session
+    initializeBrew(results.temperatureArray)
 
-          // On the startup, initialize the brew session
-          if (initialize) {
-            temperatures.setRecipeId(recipeId)
-            brew = new Brew(io, store, temperatures, gpio, updateStore)
-            initializeBrew()
-          }
-
-          return dbFunctions.getRecipeTemps(recipeId)
-        }).then(temperatureArray => {
-          conn.close()
-          resolve({
-            store: store,
-            temperatureArray: _.takeRight(temperatureArray, 30 * 60)
-          })
-        }).catch(err => {
-          console.log(err)
-          conn.close()
-          reject()
-        })
-      })
-    })
-  }
-  getStoreFromDatabase(true).then(() => {
     console.log('Brew initialized...')
   })
 
   io.on('connection', function (socket) {
     console.log('Connected...')
     io.emit('clear temp array')
-    getStoreFromDatabase().then(results => {
-      socket.emit('store initial state', results.store.value)
+    dbFunctions.getStoreFromDatabase().then(results => {
+      socket.emit('store initial state', results.store)
       socket.emit('temp array', results.temperatureArray)
     })
 
@@ -260,67 +164,75 @@ waitOn({
 
     socket.on('action', (action) => {
       // do not save the temperature array to the database
-      console.log(action.type)
       if (_.get(action, 'store.temperatureArray', false)) 
         delete action.store.temperatureArray
 
+      /**
+       * CHANGE IN STATE OF RECIPE
+       */
       if (action.type === types.NEW_RECIPE || action.type === types.COMPLETE_STEP || action.type === types.START_BREW) {
         // remove the time object on a new recipe and set the recipe id for temperature logging
         if (action.type === types.NEW_RECIPE) {
           delete action.store.time
           temperatures.setRecipeId(action.payload.id)
-
           dbFunctions.removeIncompleteTemps()
 
           // notify the frontend to clear it's temperature array
           io.emit('clear temp array')
         }
 
-        updateStore(action.store ? Object.assign({}, action.store, {
+        // update the store any time there is a change in step (i.e. new recipe, step is completed, etc)
+        dbFunctions.updateStore(action.store ? {
+          ...action.store,
           recipe: action.payload,
-          elements: {
-            boil: 0,
-            rims: 0
-          }
-        }, ) : store).then(() => {
+          elements: { boil: 0, rims: 0 }
+        } : store).then(s => {
+          emitStore(s)
+          
           // If a new recipe is uploaded, stop any previous brew sessions.
-          if (action.type === types.NEW_RECIPE) {
-            // Re-initialize a brew session
-            if (brew) brew.stop()
-            brew = new Brew(io, store, temperatures, gpio, updateStore)
-          }
-
-          // Start brew if button is pressed
-          if (action.type === types.START_BREW) {
+          if (action.type === types.NEW_RECIPE || action.type === types.START_BREW) {
             initializeBrew()
           }
         }).catch(err => console.log(err))
       }
+      
+      /**
+       * SETTINGS UPDATE
+       */
       if (action.type === types.SETTINGS) {
         // If the log temperature setting has changed, update the interval.
-        if (action.payload.temperatures &&
-          store.value.settings.temperatures &&
-          action.payload.temperatures.logTemperatures !== store.value.settings.temperatures.logTemperatures) {
+        if (get(action, 'payload.temperatures.logTemperatures', false) !== get(store, 'value.settings.temperatures.logTemperatures', false)) {
           if (action.payload.temperatures.logTemperatures)
             logTempsInterval = logInterval()
           else
             logTempsInterval.clear()
         }
-        updateStore(action.store ? Object.assign({}, action.store, { settings: action.payload }) : store).catch(err => console.log(err))
+        
+        dbFunctions.updateStore(action.store ? { ...action.store, settings: action.payload } : store).then(s => {
+          emitStore(s)
+        }).catch(err => console.log(err))
       }
+
+      /**
+       * CHART WINDOW UPDATED
+       */
       if (action.type === types.CHART_WINDOW) {
         var newStore = action.store ? Object.assign({}, action.store) : store
         newStore.settings.temperatures.chartWindow = action.payload
-        updateStore(newStore).catch(err => console.log(err))
+        dbFunctions.updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
 
         // send the client the new temperature array.
         var filterTime = moment().subtract(store.value.settings && store.value.settings.temperatures.chartWindow, 'm').unix()
       }
+
+      /**
+       * OVERRIDE OUTPUTS
+       */
       if (action.type === types.UPDATE_OUTPUT) {
         const outputs = action.store.io
         outputs[action.index].value = action.payload
         const newStore = action.store ? Object.assign({}, action.store, { io: outputs }) : store
-        updateStore(newStore).catch(err => console.log(err))
+        dbFunctions.updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
 
         // Set the overrides object on gpio so all brew steps can take appropriate action
         gpio.overrides = outputs.reduce((acc,output) => {
