@@ -47,7 +47,7 @@ class TempTooltip extends React.Component {
               </ListItem>
               {payload && payload.map((line,i) => (
                 <ListItem key={i}>
-                  <div style={{ height: 40, width: 10, backgroundColor: `${line.stroke}` }}></div>
+                  <div style={{ height: 40, width: 10, marginRight: 20, backgroundColor: `${line.stroke}` }}></div>
                   <ListItemText
                     primary={`${line.payload[line.dataKey].toFixed(1)} °F`}
                     secondary={`${line.name}`}

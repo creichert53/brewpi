@@ -126,6 +126,8 @@ waitOn({
   var brew = null
   var logTempsInterval = null
   const initializeBrew = (tempArray) => {
+    temperatures.setRecipeId(get(store, 'value.recipe.id', null))
+
     // Re-initialize a brew session
     if (brew) brew.stop()
     brew = new Brew(io, store, temperatures, gpio, (st) => {
@@ -133,7 +135,7 @@ waitOn({
     }, tempArray || [])
 
     // If the brew has already been started, then start it back up
-    if (get(store.value, 'recipe.startBrew', false)) {
+    if (get(store, 'value.recipe.startBrew', false)) {
       brew.start()
     }
 
@@ -174,7 +176,6 @@ waitOn({
         // remove the time object on a new recipe and set the recipe id for temperature logging
         if (action.type === types.NEW_RECIPE) {
           delete action.store.time
-          temperatures.setRecipeId(action.payload.id)
           dbFunctions.removeIncompleteTemps()
 
           // notify the frontend to clear it's temperature array
@@ -217,12 +218,13 @@ waitOn({
        * CHART WINDOW UPDATED
        */
       if (action.type === types.CHART_WINDOW) {
-        var newStore = action.store ? Object.assign({}, action.store) : store
-        newStore.settings.temperatures.chartWindow = action.payload
-        dbFunctions.updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
+        // var newStore = action.store ? { ...action.store } : store
+        // newStore.settings.temperatures.chartWindow = action.payload
+        // dbFunctions.updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
+        // dbFunctions.getRecipeTemps(store.value.recipe.id, action.payload).then(temps => io.emit('temp array', temps))
 
-        // send the client the new temperature array.
-        var filterTime = moment().subtract(store.value.settings && store.value.settings.temperatures.chartWindow, 'm').unix()
+        // // send the client the new temperature array.
+        // var filterTime = moment().subtract(store.value.settings && store.value.settings.temperatures.chartWindow, 'm').unix()
       }
 
       /**

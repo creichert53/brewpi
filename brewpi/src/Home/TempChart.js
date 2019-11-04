@@ -41,7 +41,7 @@ class TempChart extends React.Component {
               tickLine={false}
             />
             <YAxis
-              domain={['auto', 'auto']}
+              domain={['dataMin - 2', 'dataMax + 2']}
               tickFormatter={(value) => value ? value.toFixed(1) : 0}
               axisLine={false}
               tickLine={false}
