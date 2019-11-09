@@ -57,9 +57,9 @@ module.exports = class Heat extends step {
         complete: true
       }
 
-      options.updateStore(Object.assign({}, this.store.value, { recipe: recipe })).catch(err => console.log(err))
+      options.updateStore(Object.assign({}, this.store.value, { recipe: recipe }))
     }
-
+    
     // Check complete
     this.checkComplete = (temp) => {
       if (temp >= this.step.setpoint) {
@@ -69,7 +69,6 @@ module.exports = class Heat extends step {
 
     // Listen for settings changes
     this.on('tick', () => {
-      this.time.setStepTime(this.stepTimer)
       this.time.setRemainingTime(null)
 
       // Heating temperature is always referenced to the RIMS tube

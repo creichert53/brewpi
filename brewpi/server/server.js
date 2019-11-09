@@ -62,6 +62,20 @@ var gpio = {
 
 const httpServer = http.createServer(app)
 const io = socket(httpServer, { origins: '*:*' })
+const outputs = io.of('/outputs')
+
+// keep the frontend io list up to date
+setInterval(() => {
+  var keys = Object.keys(gpio).slice(0,6)
+  var gpioNew = []
+  keys.forEach(key => {
+    gpioNew.push({
+      name: key,
+      value: gpio[key].readSync()
+    })
+  })
+  outputs.emit('output update', gpioNew)
+}, 50)
 
 // Start a changefeed to emit temperatures to the frontend
 dbFunctions.emitTemperatures(io)
@@ -131,7 +145,7 @@ waitOn({
     // Re-initialize a brew session
     if (brew) brew.stop()
     brew = new Brew(io, store, temperatures, gpio, (st) => {
-      dbFunctions.updateStore(st).then(s => emitStore(s))
+      dbFunctions.updateStore(st).then(s => emitStore(s)).catch(err => console.log(err))
     }, tempArray || [])
 
     // If the brew has already been started, then start it back up
@@ -165,7 +179,7 @@ waitOn({
     })
 
     socket.on('action', (action) => {
-      // do not save the temperature array to the database
+      // do not save the temperature array from redux to the database because that data already exists in another table
       if (_.get(action, 'store.temperatureArray', false)) 
         delete action.store.temperatureArray
 

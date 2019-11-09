@@ -41,10 +41,14 @@ module.exports = class __step extends EventEmitter {
     this.stepTimerJob = new CronJob({
       cronTime: '*/1 * * * * *',
       onTick: () => {
-        that.stepTimer = this.stepTimer + 1
+        that.stepTimer = that.stepTimer + 1
+        that.time.setStepTime(that.stepTimer)
 
         // emit each tick to any subclass
         that.emit('tick')
+      },
+      onComplete: () => {
+        that.time.setStepTime(0)
       },
       start: true,
       timeZone: 'America/New_York',

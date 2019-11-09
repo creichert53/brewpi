@@ -35,6 +35,7 @@ import xml2js, { parseString } from 'xml2js'
 import Home from '../Home'
 import Settings from '../Settings'
 import ControlCenter from '../ControlCenter'
+import IOList from './IOList'
 import { formatRecipe, newRecipe } from '../Redux/actions'
 
 const styles = theme => ({
@@ -147,7 +148,6 @@ const DrawerListWithRoutes = props => (
     <Typography style={{...props.style}} variant='subtitle1'>
       {props.text}
     </Typography>
-    {/* <ListItemText style={{...props.style}} primary={props.text} /> */}
   </ListItem>
 )
 
@@ -222,6 +222,7 @@ class ResponsiveDrawer extends React.Component {
               />)}
           </List>
           <Divider />
+          <IOList />
         </div>
       </div>
     )
@@ -243,7 +244,7 @@ class ResponsiveDrawer extends React.Component {
             </Typography>
             <CardHeader
               title={time.totalTime}
-              subheader={time.stepTime || time.remainingTime}
+              subheader={time.remainingTime || time.stepTime}
               style={{ textAlign: 'right', paddingTop: 0, paddingBottom: 0 }}
             />
             <div>

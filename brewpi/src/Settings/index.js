@@ -225,7 +225,7 @@ class Settings extends React.Component {
   }
   handleHeaterChange = event => {
     this.props.saveHeaterSettings({
-      rims: { ...this.props.settings.rims, [event.target.id]: numeral(event.target.value).value() }
+      rims: { ...this.props.settings.rims, [event.target.id]: event.target.value }
     })
   }
   handleBoilChange = event => {
@@ -263,160 +263,171 @@ class Settings extends React.Component {
     return (
       <div className={classes.root}>
         <Grid container spacing={2} direction='column'>
-          <Grid item xs>
-            <Card>
-              <List
-                subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Temperatures</ListSubheader>}
+          <form onSubmit={(e) => {
+            e.preventDefault()
+            saveSettings(settings)
+          }}>
+            <Grid item xs>
+              <Card>
+                <List
+                  subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Temperatures</ListSubheader>}
+                >
+                  <Divider/>
+                  <ListItem divider>
+                    <ListItemText className={classes.listItemText} primary='Log Temperatures' />
+                    <Switch
+                      name='logTemperatures'
+                      checked={get(settings, 'temperatures.logTemperatures', false)}
+                      onChange={this.handleTempChange}
+                    />
+                  </ListItem>
+                  <ListItem divider>
+                    <ListItemText className={classes.listItemText} primary='Mash Temperature Interval' />
+                    <FormControl className={classes.formControl}>
+                      <Intervals
+                        {...this.props}
+                        name='mashTempInterval'
+                        id='mash-temp-interval'
+                        interval={settings.temperatures.mashTempInterval || ''}
+                        handleChange={this.handleTempChange}
+                      />
+                    </FormControl>
+                  </ListItem>
+                  <ListItem divider>
+                    <ListItemText className={classes.listItemText} primary='Boil Temperature Interval' />
+                    <FormControl className={classes.formControl}>
+                      <Intervals
+                        {...this.props}
+                        name='boilTempInterval'
+                        id='boil-temp-interval'
+                        interval={settings.temperatures.boilTempInterval}
+                        handleChange={this.handleTempChange}
+                      />
+                    </FormControl>
+                  </ListItem>
+                  {['thermistor1', 'thermistor2', 'thermistor3'].map((t,i) =>
+                    <ThermistorCalibartionListItem
+                      key={i}
+                      id={t}
+                      expanded={this.state[t].expanded}
+                      index={i}
+                      classes={classes}
+                      temperatures={settings.temperatures}
+                      handleExpandClick={this.handleExpandClick}
+                      handleThermistorChange={this.handleThermistorChange}
+                    />
+                  )}
+                </List>
+              </Card>
+            </Grid>
+            <Grid item xs>
+              <Card className={classes.card}>
+                <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>RIMS</ListSubheader>}>
+                  <Divider/>
+                  <ListItem divider>
+                    <ListItemText className={classes.listItemText} primary='Proportional' />
+                    <TextField
+                      id='proportional'
+                      value={settings.rims.proportional === null ? 0 : settings.rims.proportional}
+                      onChange={this.handleHeaterChange}
+                      type='number'
+                      className={classnames(classes.numberField, classes.field)}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      margin='normal'
+                    />
+                  </ListItem>
+                  <ListItem divider>
+                    <ListItemText className={classes.listItemText} primary='Integral' />
+                    <TextField
+                      id='integral'
+                      value={settings.rims.integral === null ? 0 : settings.rims.integral}
+                      onChange={this.handleHeaterChange}
+                      type='number'
+                      className={classnames(classes.numberField, classes.field)}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      margin='normal'
+                    />
+                  </ListItem>
+                  <ListItem divider>
+                    <ListItemText className={classes.listItemText} primary='Derivative' />
+                    <TextField
+                      id='derivative'
+                      value={settings.rims.derivative === null ? 0 : settings.rims.derivative}
+                      onChange={this.handleHeaterChange}
+                      type='number'
+                      className={classnames(classes.numberField, classes.field)}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      margin='normal'
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText className={classes.listItemText} primary='Max Output' />
+                    <TextField
+                      id='maxOutput'
+                      value={settings.rims.maxOutput === null ? 0 : settings.rims.maxOutput}
+                      onChange={this.handleHeaterChange}
+                      type='number'
+                      className={classnames(classes.numberField, classes.field)}
+                      InputProps={{
+                        endAdornment: <InputAdornment position='start'>%</InputAdornment>,
+                      }}
+                    />
+                  </ListItem>
+                  <Divider/>
+                  <ListItem>
+                    <Typography variant='subtitle1' id='label'>Setpoint Adjustment</Typography>
+                    <Slider
+                      id='setpointAdjust'
+                      value={((settings.rims.setpointAdjust + deadband * 0.5) / deadband) * 100}
+                      aria-labelledby='label'
+                      onChange={this.handleSliderChange}
+                    />
+                    <Typography variant='subtitle1' id='label' style={{ width: 100, paddingLeft: 20 }}>
+                      {`${numeral(settings.rims.setpointAdjust).format('0.0')} Δ°F`}
+                    </Typography>
+                  </ListItem>
+                </List>
+              </Card>
+            </Grid>
+            <Grid item xs>
+              <Card className={classes.card}>
+                <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Boil</ListSubheader>}>
+                  <Divider/>
+                  <ListItem>
+                    <ListItemText className={classes.listItemText} primary='Setpoint' />
+                    <TextField
+                      id='setpoint'
+                      value={settings.boil.setpoint === null ? 0 : settings.boil.setpoint}
+                      onChange={this.handleBoilChange}
+                      type='number'
+                      className={classnames(classes.numberField, classes.field)}
+                      InputProps={{
+                        endAdornment: <InputAdornment position='start'>%</InputAdornment>,
+                      }}
+                    />
+                  </ListItem>
+                </List>
+              </Card>
+            </Grid>
+            <Grid item xs>
+              <Fab
+                type='submit'
+                variant='extended'
+                aria-label='save'
+                className={classes.fab}
+                onClick={() => saveSettings(settings)}
               >
-                <Divider/>
-                <ListItem divider>
-                  <ListItemText className={classes.listItemText} primary='Log Temperatures' />
-                  <Switch
-                    name='logTemperatures'
-                    checked={get(settings, 'temperatures.logTemperatures', false)}
-                    onChange={this.handleTempChange}
-                  />
-                </ListItem>
-                <ListItem divider>
-                  <ListItemText className={classes.listItemText} primary='Mash Temperature Interval' />
-                  <FormControl className={classes.formControl}>
-                    <Intervals
-                      {...this.props}
-                      name='mashTempInterval'
-                      id='mash-temp-interval'
-                      interval={settings.temperatures.mashTempInterval || ''}
-                      handleChange={this.handleTempChange}
-                    />
-                  </FormControl>
-                </ListItem>
-                <ListItem divider>
-                  <ListItemText className={classes.listItemText} primary='Boil Temperature Interval' />
-                  <FormControl className={classes.formControl}>
-                    <Intervals
-                      {...this.props}
-                      name='boilTempInterval'
-                      id='boil-temp-interval'
-                      interval={settings.temperatures.boilTempInterval}
-                      handleChange={this.handleTempChange}
-                    />
-                  </FormControl>
-                </ListItem>
-                {['thermistor1', 'thermistor2', 'thermistor3'].map((t,i) =>
-                  <ThermistorCalibartionListItem
-                    key={i}
-                    id={t}
-                    expanded={this.state[t].expanded}
-                    index={i}
-                    classes={classes}
-                    temperatures={settings.temperatures}
-                    handleExpandClick={this.handleExpandClick}
-                    handleThermistorChange={this.handleThermistorChange}
-                  />
-                )}
-              </List>
-            </Card>
-          </Grid>
-          <Grid item xs>
-            <Card className={classes.card}>
-              <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>RIMS</ListSubheader>}>
-                <Divider/>
-                <ListItem divider>
-                  <ListItemText className={classes.listItemText} primary='Proportional' />
-                  <TextField
-                    id='proportional'
-                    value={settings.rims.proportional === null ? 0 : settings.rims.proportional}
-                    onChange={this.handleHeaterChange}
-                    type='number'
-                    className={classnames(classes.numberField, classes.field)}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    margin='normal'
-                  />
-                </ListItem>
-                <ListItem divider>
-                  <ListItemText className={classes.listItemText} primary='Integral' />
-                  <TextField
-                    id='integral'
-                    value={settings.rims.integral === null ? 0 : settings.rims.integral}
-                    onChange={this.handleHeaterChange}
-                    type='number'
-                    className={classnames(classes.numberField, classes.field)}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    margin='normal'
-                  />
-                </ListItem>
-                <ListItem divider>
-                  <ListItemText className={classes.listItemText} primary='Derivative' />
-                  <TextField
-                    id='derivative'
-                    value={settings.rims.derivative === null ? 0 : settings.rims.derivative}
-                    onChange={this.handleHeaterChange}
-                    type='number'
-                    className={classnames(classes.numberField, classes.field)}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    margin='normal'
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText className={classes.listItemText} primary='Max Output' />
-                  <TextField
-                    id='maxOutput'
-                    value={settings.rims.maxOutput === null ? 0 : settings.rims.maxOutput}
-                    onChange={this.handleHeaterChange}
-                    type='number'
-                    className={classnames(classes.numberField, classes.field)}
-                    InputProps={{
-                      endAdornment: <InputAdornment position='start'>%</InputAdornment>,
-                    }}
-                  />
-                </ListItem>
-                <Divider/>
-                <ListItem>
-                  <Typography variant='subtitle1' id='label'>Setpoint Adjustment</Typography>
-                  <Slider
-                    id='setpointAdjust'
-                    value={((settings.rims.setpointAdjust + deadband * 0.5) / deadband) * 100}
-                    aria-labelledby='label'
-                    onChange={this.handleSliderChange}
-                  />
-                  <Typography variant='subtitle1' id='label' style={{ width: 100, paddingLeft: 20 }}>
-                    {`${numeral(settings.rims.setpointAdjust).format('0.0')} Δ°F`}
-                  </Typography>
-                </ListItem>
-              </List>
-            </Card>
-          </Grid>
-          <Grid item xs>
-            <Card className={classes.card}>
-              <List subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Boil</ListSubheader>}>
-                <Divider/>
-                <ListItem>
-                  <ListItemText className={classes.listItemText} primary='Setpoint' />
-                  <TextField
-                    id='setpoint'
-                    value={settings.boil.setpoint === null ? 0 : settings.boil.setpoint}
-                    onChange={this.handleBoilChange}
-                    type='number'
-                    className={classnames(classes.numberField, classes.field)}
-                    InputProps={{
-                      endAdornment: <InputAdornment position='start'>%</InputAdornment>,
-                    }}
-                  />
-                </ListItem>
-              </List>
-            </Card>
-          </Grid>
-          <Grid item xs>
-            <Fab variant='extended' aria-label='save' className={classes.fab} onClick={() => saveSettings(settings)}>
-              <SaveIcon className={classes.extendedIcon} />
-              Save
-            </Fab>
-          </Grid>
+                <SaveIcon className={classes.extendedIcon} />
+                Save
+              </Fab>
+            </Grid>
+          </form>
         </Grid>
       </div>
     )

@@ -17,7 +17,6 @@ module.exports = class Chill extends step {
     this.io = options.io
 
     this.on('tick', () => {
-      this.time.setStepTime(this.stepTimer)
       this.time.setRemainingTime(null)
     })
 

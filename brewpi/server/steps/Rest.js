@@ -25,7 +25,6 @@ module.exports = class Rest extends heat {
     }
 
     this.on('tick', () => {
-      this.time.setStepTime(null)
       this.time.setRemainingTime(this.activeStep.stepTime * 60 - this.stepTimer)
     })
   }

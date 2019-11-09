@@ -56,7 +56,8 @@ module.exports = class Boil extends step {
     }
     // Clear the heater loops and ensure the heater is off
     this.stopHeater = () => {
-      that.heatInterval.clear()
+      if (that.heatInterval)
+        that.heatInterval.clear()
       clearTimeout(that.heatOffTimeout)
       that.gpio.heat2.writeSync(options.gpio.overrides.heat2 ? (options.gpio.overrides.heat2.value === -1 ? 0 : 1) : 1)
       that.gpio.auto.heat2 = 1
@@ -81,19 +82,18 @@ module.exports = class Boil extends step {
         complete: true
       }
 
-      options.updateStore(Object.assign({}, this.store.value, { recipe: recipe })).catch(err => console.log(err))
+      options.updateStore(Object.assign({}, this.store.value, { recipe: recipe }))
     }
 
     // Check complete
     this.checkComplete = () => {
-      if (this.stepTimer >= this.recipe.boil_time * 60) {
+      if (!this.recipe.activeStep.todos && this.stepTimer >= this.recipe.boil_time * 60) {
         this.completeStep()
       }
     }
 
     // Listen for settings changes
     this.on('tick', () => {
-      this.time.setStepTime(this.activeStep.stepTime ? null : this.activeStep.stepTime * 60 - this.stepTimer)
       this.time.setRemainingTime(this.activeStep.stepTime ? this.activeStep.stepTime * 60 - this.stepTimer : null)
 
       // On Each tick check

@@ -7,12 +7,17 @@ var Chill = require('./steps/Chill')
 var Rest = require('./steps/Rest')
 var RestAndConfirm = require('./steps/RestAndConfirm')
 var Boil = require('./steps/Boil')
+var get = require('lodash/get')
+var dbFunctions = require('./database/functions')
 
 // function that holds the overall time string
 function Time() {
-  this.totalTime = '00:00:00'
-  this.stepTime = null
-  this.remainingTime = null
+  this.resetTime = () => {
+    this.totalTime = '00:00:00'
+    this.stepTime = null
+    this.remainingTime = null
+  }
+  this.resetTime()
 
   this.setTotalTime = (time) => { this.totalTime = !time && time !== 0 ? null : timeFormat.fromS(time, 'hh:mm:ss') }
   this.setStepTime = (time) => { this.stepTime = !time && time !== 0 ? null : timeFormat.fromS(time, 'hh:mm:ss') }
@@ -198,21 +203,27 @@ module.exports = class Brew {
     this.stepClass ? this.stepClass.stop() : null
 
     // Turn heating components off
-    this.gpio.heat1.writeSync(0)
-    this.gpio.heat2.writeSync(0)
-    this.gpio.contactor1.writeSync(0)
-    this.gpio.contactor2.writeSync(0)
-    setTimeout(() => {
-      that.gpio.pump1.writeSync(0)
-      that.gpio.pump2.writeSync(0)
-      that.gpio = null
-    }, 5000)
+    if (this.gpio) {
+      this.gpio.heat1.writeSync(0)
+      this.gpio.heat2.writeSync(0)
+      this.gpio.contactor1.writeSync(0)
+      this.gpio.contactor2.writeSync(0)
+      setTimeout(() => {
+        that.gpio.pump1.writeSync(0)
+        that.gpio.pump2.writeSync(0)
+        that.gpio = null
+      }, 5000)
+    }
 
     this.io = null
     this.store = null
     this.previousStore = null
     this.activeStep = null
     this.stepClass = null
+
+    this.time.resetTime()
+    if (this.io)
+      this.io.emit('time', this.time.getValue()) // emit the time one last time to update the front end
   }
 
   end() {

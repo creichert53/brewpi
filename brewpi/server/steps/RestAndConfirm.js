@@ -21,7 +21,6 @@ module.exports = class RestAndConfirm extends heat {
     this.checkComplete = () => { /** THIS IS A DIRECT OVERRIDE OF THE HEAT STEP. ENDS WHEN NEXT BUTTON IS CLICKED **/ }
 
     this.on('tick', () => {
-      this.time.setStepTime(this.stepTimer)
       this.time.setRemainingTime(null)
     })
   }

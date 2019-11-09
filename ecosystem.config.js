@@ -2,8 +2,6 @@ const path = require('path')
 
 const appRoot = path.resolve(__dirname)
 
-console.log(appRoot)
-
 // Options reference: https://pm2.io/doc/en/runtime/reference/ecosystem-file/
 module.exports = {
   apps : [
@@ -42,10 +40,14 @@ module.exports = {
       ]
     },
     {
-      name: 'database',
-      script: '/srv/brewpi/rethinkdb/index.js',
-      autorestart: false,
+      name: 'docker',
+      // cwd: '/srv/brewpi'
+      // interpreter: '/usr/bin/docker-compose',
+      // args: 'up',
+      script: '/srv/brewpi/docker/index.js',
       instances: 1,
+      autorestart: true,
+      watch: ['/srv/brewpi/docker'],
       max_memory_restart: '2G'
     }
   ],
