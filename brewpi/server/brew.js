@@ -32,11 +32,12 @@ function Time() {
 }
 
 module.exports = class Brew {
-  constructor(io, store, temperatures, gpio, updateStore, temperatureArray) {
+  constructor(io, store, temperatures, gpio, updateStore, temperatureArray, GPIO) {
     // construct the variables for the brew session
     this.io = io
     this.store = store
     this.gpio = gpio
+    this.GPIO = GPIO
     this.previousStore = this.store.value
     this.activeStep = null
     this.stepClass = null
@@ -112,7 +113,8 @@ module.exports = class Brew {
                   temperatures: temperatures,
                   updateStore: updateStore,
                   pid: pidSettings,
-                  time: this.time
+                  time: this.time,
+                  GPIO: this.GPIO
                 })
                 break
               case 'CHILLING':

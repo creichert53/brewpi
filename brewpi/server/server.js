@@ -20,10 +20,9 @@ const cloneDeep = require('lodash/cloneDeep')
 const bodyParser = require('body-parser')
 const accurateInterval = require('accurate-interval')
 
-const Gpio = require('onoff').Gpio
-
 const Temperatures = require('./helpers/Temperatures')
 const Thermistor = require('./helpers/Thermistor')
+const Outputs = require('./helpers/Outputs')
 const Brew = require('./brew')
 const types = require('../src/Redux/types')
 const dbFunctions = require('./database/functions')
@@ -41,41 +40,10 @@ app.use(helmet())
 app.use(cors())
 app.use(bodyParser.json())
 
-// Define the IO
-var gpio = {
-  pump1: new Gpio(15, 'out'),
-  pump2: new Gpio(23, 'out'),
-  heat1: new Gpio(25, 'out'),
-  heat2: new Gpio(24, 'out'),
-  contactor1: new Gpio(14, 'out'),
-  contactor2: new Gpio(18, 'out'),
-  auto: {
-    pump1: 0,
-    pump2: 0,
-    heat1: 0,
-    heat2: 0,
-    contactor1: 0,
-    contactor2: 0
-  },
-  overrides: {}
-}
-
 const httpServer = http.createServer(app)
 const io = socket(httpServer, { origins: '*:*' })
 const outputs = io.of('/outputs')
-
-// keep the frontend io list up to date
-setInterval(() => {
-  var keys = Object.keys(gpio).slice(0,6)
-  var gpioNew = []
-  keys.forEach(key => {
-    gpioNew.push({
-      name: key,
-      value: gpio[key].readSync()
-    })
-  })
-  outputs.emit('output update', gpioNew)
-}, 50)
+var GPIO = new Outputs(outputs)
 
 // Start a changefeed to emit temperatures to the frontend
 dbFunctions.emitTemperatures(io)
@@ -144,9 +112,9 @@ waitOn({
 
     // Re-initialize a brew session
     if (brew) brew.stop()
-    brew = new Brew(io, store, temperatures, gpio, (st) => {
+    brew = new Brew(io, store, temperatures, GPIO.gpio, (st) => {
       dbFunctions.updateStore(st).then(s => emitStore(s)).catch(err => console.log(err))
-    }, tempArray || [])
+    }, tempArray || [], GPIO)
 
     // If the brew has already been started, then start it back up
     if (get(store, 'value.recipe.startBrew', false)) {
@@ -251,17 +219,16 @@ waitOn({
         dbFunctions.updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
 
         // Set the overrides object on gpio so all brew steps can take appropriate action
-        gpio.overrides = outputs.reduce((acc,output) => {
-          if (output.value !== 0) acc[output.name] = output
-          return acc
-        }, {})
+        outputs.forEach((acc,output) => {
+          if (output.value !== 0) GPIO.setOverride(output.name, output)
+        })
 
         // Initially set the gpio to their correct state
         newStore.io && newStore.io.forEach(val => {
           if (val.value !== 0) {
-            gpio[val.name].writeSync(val.value === -1 ? 0 : 1)
+            GPIO.writeOutput(val.name, val.value === -1 ? 0 : 1)
           } else {
-            gpio[val.name].writeSync(gpio.auto[val.name])
+            GPIO.writeOutput(val.name, GPIO.auto[val.name])
           }
         })
       }
@@ -277,17 +244,6 @@ process.once('SIGUSR2', function () {
 
 // free gpio resources
 process.on('SIGINT', function () {
-  console.log('SIGINT')
-  console.log('Freeing up GPIO resources')
-
-  try {
-    gpio.pump1.unexport()
-    gpio.pump2.unexport()
-    gpio.heat1.unexport()
-    gpio.heat2.unexport()
-    gpio.contactor1.unexport()
-    gpio.contactor2.unexport()
-  } catch (err) { console.log(err) }
-
+  GPIO.unexportAll()
   process.exit()
 })

@@ -18,7 +18,6 @@ module.exports = class Boil extends step {
 
     // Declare variables on this instance
     this.store = options.store
-    this.gpio = options.gpio
     this.setpoint = options.activeStep.setpoint
     this.step = options.activeStep
     this.time = options.time
@@ -35,21 +34,19 @@ module.exports = class Boil extends step {
     this.heatOffTimeout = null
 
     // Declare that variable to use inside other methods
+    var gpio = options.GPIO
     var that = this
 
     // Start the heater loop
     this.startHeater = () => {
       setTimeout(() => {
-        that.gpio.contactor2.writeSync(options.gpio.overrides.contactor2 ? (options.gpio.overrides.contactor2.value === -1 ? 0 : 1) : 1)
-        that.gpio.auto.contactor2 = 1
+        gpio.writeOutput('contactor2', 0)
 
         // start an interval that will control the heater element on and off
         that.heatInterval = accurateInterval(() => {
-          that.gpio.heat2.writeSync(options.gpio.overrides.heat2 ? (options.gpio.overrides.heat2.value === -1 ? 0 : 1) : 1)
-          that.gpio.auto.heat2 = 1
+          gpio.writeOutput('heat2', 1)
           that.heatOffTimeout = setTimeout(() => {
-            that.gpio.heat2.writeSync(options.gpio.overrides.heat2 ? (options.gpio.overrides.heat2.value === -1 ? 0 : 1) : 0)
-            that.gpio.auto.heat2 = 0
+            gpio.writeOutput('heat2', 0)
           }, that.setpoint / 100.0 * 1000)
         }, 1000, { aligned: true, immediate: true })
       }, 5000)
@@ -59,8 +56,7 @@ module.exports = class Boil extends step {
       if (that.heatInterval)
         that.heatInterval.clear()
       clearTimeout(that.heatOffTimeout)
-      that.gpio.heat2.writeSync(options.gpio.overrides.heat2 ? (options.gpio.overrides.heat2.value === -1 ? 0 : 1) : 1)
-      that.gpio.auto.heat2 = 1
+      gpio.writeOutput('heat2', 1)
     }
 
     // Complete the Step
@@ -115,8 +111,7 @@ module.exports = class Boil extends step {
     // On a signal to stop, turn heater components off. Dissipate heat from element and shut pump off.
     this.on('stop', () => {
       this.stopHeater()
-      this.gpio.contactor2.writeSync(options.gpio.overrides.contactor2 ? (options.gpio.overrides.contactor2.value === -1 ? 0 : 1) : 1)
-      this.gpio.auto.contactor2 = 1
+      gpio.writeOutput('contactor2', 1)
     })
 
     // On a signal to pause, stop heating functions

@@ -19,7 +19,6 @@ module.exports = class Heat extends step {
 
     // Declare variables on this instance
     this.store = options.store
-    this.gpio = options.gpio
     this.setpoint = options.activeStep.setpoint
     this.step = options.activeStep
     this.time = options.time
@@ -32,6 +31,7 @@ module.exports = class Heat extends step {
     })
 
     // Declare that variable to use inside other methods
+    var gpio = options.GPIO
     var that = this
 
     // Pump must be running for the PID loop to work
@@ -112,11 +112,9 @@ module.exports = class Heat extends step {
     // Two seconds after contactor, start pump
     this.on('start', () => {
       setTimeout(() => {
-        that.gpio.pump1.writeSync(options.gpio.overrides.pump1 ? (options.gpio.overrides.pump1.value === -1 ? 0 : 1) : 1)
-        that.gpio.auto.pump1 = 1
+        gpio.writeOutput('pump1', 1)
         setTimeout(() => {
-          that.gpio.contactor1.writeSync(options.gpio.overrides.contactor1 ? (options.gpio.overrides.contactor1.value === -1 ? 0 : 1) : 1)
-          that.gpio.auto.contactor1 = 1
+          gpio.writeOutput('contactor1', 1)
         }, 5000)
       }, 2000)
       this.pid.startLoop()
@@ -125,15 +123,13 @@ module.exports = class Heat extends step {
     // On a signal to stop, turn heater components off. Dissipate heat from element and shut pump off.
     this.on('stop', () => {
       this.pid.stopLoop()
-      this.gpio.heat1.writeSync(options.gpio.overrides.heat1 ? (options.gpio.overrides.heat1.value === -1 ? 0 : 1) : 0)
-      that.gpio.auto.heat1 = 0
+      gpio.writeOutput('heat1', 0)
     })
 
     // On a signal to pause, stop heating functions
     this.on('pause', () => {
       this.pid.stopLoop()
-      this.gpio.heat1.writeSync(options.gpio.overrides.heat1 ? (options.gpio.overrides.heat1.value === -1 ? 0 : 1) : 0)
-      that.gpio.auto.heat1 = 0
+      gpio.writeOutput('heat1', 0)
     })
 
     // On a signal to resume, start the loop back up. Heating functions should resume from there.
@@ -154,21 +150,18 @@ module.exports = class Heat extends step {
       var out = output / 100
 
       // Read the status of the pump output and then decide how to handle the heater output
-      this.gpio.pump1.read((err,value) => {
+      gpio.readOutput('pump1').then(value => {
         // If pump is on, allow PID loop to control heater
         // Else turn heater off
         if (value) {
-          that.gpio.heat1.writeSync(options.gpio.overrides.heat1 ? (options.gpio.overrides.heat1.value === -1 ? 0 : 1) : 1) // turn heater ON
-          that.gpio.auto.heat1 = 1
+          gpio.writeOutput('heat1', 1) // turn heater ON
           setTimeout(() => { // after output delay, turn heater OFF
-            that.gpio.heat1.writeSync(options.gpio.overrides.heat1 ? (options.gpio.overrides.heat1.value === -1 ? 0 : 1) : 0)
-            that.gpio.auto.heat1 = 0
+            gpio.writeOutput('heat1', 0)
           }, Math.max(0, out * that.pid.getTimeInterval() - 10)) // Output * Ratio of Interval - 10 ms (prevent interval overlap)
         } else {
-          that.gpio.heat1.writeSync(0) // should always be off if pump is off
-          that.gpio.auto.heat1 = 0
+          gpio.writeOutput('heat1', 0) // should always be off if pump is off
         }
-      })
+      }).catch(err => console.error(err))
     })
   }
 }
