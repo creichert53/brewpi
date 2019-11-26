@@ -39,17 +39,17 @@ module.exports = {
         '--color'
       ]
     },
-    {
-      name: 'docker',
-      // cwd: '/srv/brewpi'
-      // interpreter: '/usr/bin/docker-compose',
-      // args: 'up',
-      script: '/srv/brewpi/docker/index.js',
-      instances: 1,
-      autorestart: true,
-      watch: ['/srv/brewpi/docker'],
-      max_memory_restart: '2G'
-    }
+    // {
+    //   name: 'docker',
+    //   // cwd: '/srv/brewpi'
+    //   // interpreter: '/usr/bin/docker-compose',
+    //   // args: 'up',
+    //   script: '/srv/brewpi/docker/index.js',
+    //   instances: 1,
+    //   autorestart: true,
+    //   watch: ['/srv/brewpi/docker'],
+    //   max_memory_restart: '2G'
+    // }
   ],
   deploy : {
     production : {

@@ -2,6 +2,50 @@ const _ = require('lodash')
 const r = require('rethinkdb')
 const moment = require('moment-timezone')
 
+const bootstrapDatabase = () => {
+  return new Promise((resolve, reject) => {
+    r.connect({db: 'brewery'}).then(conn => {
+      var all = []
+      r.dbList().contains('test')
+        .do(dbExists => r.branch(dbExists, r.dbDrop('test'), { dbs_dropped: 0 }))
+        .do(() => r.dbList().contains('brewery'))
+        .do(dbExists => (
+          r.branch(
+            dbExists,
+            { dbs_created: 0 },
+            r.dbCreate('brewery')
+          )
+        ))
+        .do(() => r.db('brewery').tableList().contains('temperatures'))
+        .do(tableExists => (
+          r.branch(
+            tableExists,
+            { tables_created: 0 },
+            r.db('brewery').tableCreate('temperatures')
+              .do(() => r.db('brewery').table('temperatures').indexCreate('recipeId'))
+              .do(() => r.db('brewery').table('temperatures').indexCreate('complete'))
+              .do(() => r.db('brewery').table('temperatures').indexCreate('time'))
+              .do(() => r.db('brewery').table('temperatures').indexCreate('recipe_complete_time'))
+              .do(() => r.db('brewery').table('temperatures').indexCreate('complete_time'))
+          )
+        ))
+        .do(() => r.db('brewery').tableList().contains('store'))
+        .do(tableExists => (
+          r.branch(
+            tableExists,
+            { tables_created: 0 },
+            r.db('brewery').tableCreate('store')
+          )
+        )).run(conn).then(results => {
+          conn.close()
+          resolve(results)
+        })
+    }).catch(err => {
+      reject(err)
+    })
+  })
+}
+
 const removeStaleTimeData = () => {
   r.connect({db: 'brewery'}).then(conn => {
     r.table('temperatures')
@@ -81,7 +125,10 @@ const getStoreFromDatabase = () => {
   var store = null
   return new Promise(function(resolve, reject) {
     r.connect({db: 'brewery'}).then(conn => {
-      r.table('store').get('store').coerceTo('object').run(conn).then(result => {
+      // first make sure the database has all the necessary tables and indeces
+      bootstrapDatabase().then(() => {
+        return r.table('store').get('store').coerceTo('object').run(conn)
+      }).then(result => {
         store = result
         return getRecipeTemps(_.get(store, 'recipe.id', null))
       }).then(temperatureArray => {
@@ -133,6 +180,7 @@ const emitTemperatures = (io) => {
 }
 
 module.exports = {
+  bootstrapDatabase,
   removeStaleTimeData,
   completeTimeData,
   insertTime,

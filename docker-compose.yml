@@ -1,6 +1,7 @@
 version: '3'
 volumes:
   rethink_data:
+
 services:
   rethinkdb:
     build: ./rethinkdb
@@ -12,6 +13,7 @@ services:
       - "8080:8080"
       - "28015:28015"
       - "29015:29015"
+
   flask:
     build: ./reports
     volumes:
@@ -20,6 +22,7 @@ services:
       - 5000:5000
     links:
       - rethinkdb:db
+      
   # app:
   #   build: ./app
   #   privileged: true
