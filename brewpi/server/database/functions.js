@@ -9,13 +9,9 @@ const bootstrapDatabase = () => {
       r.dbList().contains('test')
         .do(dbExists => r.branch(dbExists, r.dbDrop('test'), { dbs_dropped: 0 }))
         .do(() => r.dbList().contains('brewery'))
-        .do(dbExists => (
-          r.branch(
-            dbExists,
-            { dbs_created: 0 },
-            r.dbCreate('brewery')
-          )
-        ))
+        .do(dbExists => r.branch(dbExists, { dbs_created: 0 }, r.dbCreate('brewery')))
+        .do(() => r.db('brewery').tableList().contains('reboots'))
+        .do(tableExists => r.branch(tableExists, { tables_created: 0 }, r.db('brewery').tableCreate('reboots')))
         .do(() => r.db('brewery').tableList().contains('temperatures'))
         .do(tableExists => (
           r.branch(
@@ -23,10 +19,11 @@ const bootstrapDatabase = () => {
             { tables_created: 0 },
             r.db('brewery').tableCreate('temperatures')
               .do(() => r.db('brewery').table('temperatures').indexCreate('recipeId'))
+              .do(() => r.db('brewery').table('temperatures').indexWait('recipeId'))
               .do(() => r.db('brewery').table('temperatures').indexCreate('complete'))
+              .do(() => r.db('brewery').table('temperatures').indexWait('complete'))
               .do(() => r.db('brewery').table('temperatures').indexCreate('time'))
-              .do(() => r.db('brewery').table('temperatures').indexCreate('recipe_complete_time'))
-              .do(() => r.db('brewery').table('temperatures').indexCreate('complete_time'))
+              .do(() => r.db('brewery').table('temperatures').indexWait('time'))
           )
         ))
         .do(() => r.db('brewery').tableList().contains('store'))
@@ -34,9 +31,30 @@ const bootstrapDatabase = () => {
           r.branch(
             tableExists,
             { tables_created: 0 },
-            r.db('brewery').tableCreate('store')
+            r.db('brewery').tableCreate('store').do(() => r.db('brewery').table('store').insert({ id: 'store' }))
           )
-        )).run(conn).then(results => {
+        ))
+        .run(conn).then(() => (
+          r.db('brewery').table('temperatures').indexList().contains('recipe_complete_time').run(conn)
+        )).then(exists => (
+          r.branch(
+            exists,
+            { index_created: 0 },
+            r.db('brewery').table('temperatures').indexCreate('recipe_complete_time', [r.row('recipeId'), r.row('complete'), r.row('time')])
+          ).run(conn)
+        )).then(() => (
+          r.db('brewery').table('temperatures').indexList().contains('complete_time').run(conn)
+        )).then(exists => (
+          r.branch(
+            exists,
+            { index_created: 0 },
+            r.db('brewery').table('temperatures').indexCreate('complete_time', [r.row('complete'), r.row('time')])
+          ).run(conn)
+        )).then(() => (
+          r.db('brewery').table('temperatures').indexWait('recipe_complete_time').run(conn)
+        )).then(() => (
+          r.db('brewery').table('temperatures').indexWait('complete_time').run(conn)
+        )).then(results => {
           conn.close()
           resolve(results)
         })
@@ -85,25 +103,29 @@ const insertTime = (options) => {
 
 const getRecipeTemps = (recipeId) => {
   return new Promise((resolve, reject) => {
-    r.connect({db: 'brewery'}).then(conn => {
-      r.branch(r.table('temperatures').getAll(recipeId, {index: 'recipeId'}).count().gt(0),
-        r.table('temperatures')
-          .between(
-            [recipeId || '', false, r.db('brewery').table('temperatures').max({index: 'time'})('time').sub(30 * 60)],
-            [recipeId || '', false, r.maxval],
-            { index: 'recipe_complete_time' }
-          )
-          .orderBy({ index: 'recipe_complete_time' })
-          .coerceTo('array'),
-        []
-      ).run(conn).then(temps => {
-        conn.close()
-        resolve(temps)
-      }).catch(err => {
-        conn.close()
-        reject(err)
+    if (recipeId) {
+      r.connect({db: 'brewery'}).then(conn => {
+        r.branch(r.table('temperatures').getAll(recipeId, {index: 'recipeId'}).count().gt(0),
+          r.table('temperatures')
+            .between(
+              [recipeId || '', false, r.db('brewery').table('temperatures').max({index: 'time'})('time').sub(30 * 60)],
+              [recipeId || '', false, r.maxval],
+              { index: 'recipe_complete_time' }
+            )
+            .orderBy({ index: 'recipe_complete_time' })
+            .coerceTo('array'),
+          []
+        ).run(conn).then(temps => {
+          conn.close()
+          resolve(temps)
+        }).catch(err => {
+          conn.close()
+          reject(err)
+        })
       })
-    })
+    } else {
+      resolve([])
+    }
   })
 }
 
@@ -126,9 +148,7 @@ const getStoreFromDatabase = () => {
   return new Promise(function(resolve, reject) {
     r.connect({db: 'brewery'}).then(conn => {
       // first make sure the database has all the necessary tables and indeces
-      bootstrapDatabase().then(() => {
-        return r.table('store').get('store').coerceTo('object').run(conn)
-      }).then(result => {
+      r.table('store').get('store').coerceTo('object').run(conn).then(result => {
         store = result
         return getRecipeTemps(_.get(store, 'recipe.id', null))
       }).then(temperatureArray => {
