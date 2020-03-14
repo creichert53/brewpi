@@ -1,0 +1,5 @@
+# requirements.txt
+Flask==1.1.2
+openpyxl==3.0.3
+rethinkdb==2.4.5
+gpiozero==1.5.1

@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, request, send_file
-from report import get_report, get_timeseries
+from service.report import get_report, get_timeseries
 
 app = Flask(__name__)
 
@@ -24,6 +24,10 @@ def timeseries():
         return send_file(excel_report,
             attachment_filename='your_filename.xlsx',
             as_attachment=True)
+
+@app.route('/')
+def default_route():
+    return "hello world"
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
