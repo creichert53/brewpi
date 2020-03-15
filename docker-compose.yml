@@ -1,0 +1,37 @@
+version: '3'
+# volumes:
+#   rethink_data:
+
+services:
+  # rethinkdb:
+  #   build: ./rethinkdb
+  #   privileged: true
+  #   restart: always
+  #   volumes:
+  #     - 'rethink_data:/data'
+  #   ports:
+  #     - "8080:8080"
+  #     - "28015:28015"
+  #     - "29015:29015"
+
+  flask:
+    build: ./server
+    privileged: true
+    tty: true
+    restart: always
+    volumes:
+      - ./server:/app/server
+    ports:
+      - 5000:5000
+    # links:
+    #   - rethinkdb:db
+      
+  # app:
+  #   build: ./app
+  #   privileged: true
+  #   restart: always
+  #   # depends_on:
+  #   #   - rethinkdb
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
