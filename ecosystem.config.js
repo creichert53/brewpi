@@ -29,7 +29,11 @@ module.exports = {
     },
     {
       name: 'client',
+<<<<<<< HEAD
       cwd: '/srv/brewpi/brewpi',
+=======
+      cwd: '/srv/brewpi/client',
+>>>>>>> test
       script: 'npm',
       args: 'start',
       instances: 1,

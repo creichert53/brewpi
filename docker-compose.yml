@@ -17,6 +17,10 @@ services:
   flask:
     build: ./server
     privileged: true
+<<<<<<< HEAD
+=======
+    tty: true
+>>>>>>> test
     restart: always
     volumes:
       - ./server:/app/server

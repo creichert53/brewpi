@@ -1,5 +1,14 @@
 # requirements.txt
+<<<<<<< HEAD
 Flask==1.1.2
 openpyxl==3.0.3
 rethinkdb==2.4.5
 gpiozero==1.5.1
+=======
+rpi-gpio
+spidev
+gpiozero==1.5.1
+Flask==1.1.1
+openpyxl==3.0.3
+rethinkdb==2.4.5
+>>>>>>> test
