@@ -1,8 +1,3 @@
-require('appmetrics-dash').monitor({
-  url: '/monitor/server',
-  port: 4000,
-  title: 'Server'
-})
 const _ = require('lodash')
 const r = require('rethinkdb')
 const fs = require('fs')

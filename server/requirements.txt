@@ -1,4 +1,6 @@
 # requirements.txt
+Adafruit_GPIO
+Adafruit_MCP3008
 rpi-gpio
 spidev
 gpiozero==1.5.1

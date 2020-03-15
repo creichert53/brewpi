@@ -26,6 +26,7 @@ chown -R pi:pi /app
 
 # Install docker and docker-compose
 curl -sSL https://get.docker.com | sh
+groupadd docker
 usermod -aG docker pi
 apt-get install -y libffi-dev libssl-dev
 apt-get install -y python3 python3-pip
