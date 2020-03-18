@@ -1,7 +1,6 @@
 # requirements.txt
-Adafruit_GPIO
-Adafruit_MCP3008
-rpi-gpio
+RPi.GPIO
+pigpio
 spidev
 gpiozero==1.5.1
 Flask==1.1.1

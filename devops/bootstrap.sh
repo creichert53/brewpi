@@ -8,7 +8,7 @@ apt-get upgrade
 raspi-config
 
 # Install dependencies
-apt-get install -y git python3-gpiozero build-essential python-dev
+apt-get install -y build-essential python3-gpiozero python3-smbus python3-dev
 
 # Install nodejs
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
@@ -29,8 +29,8 @@ curl -sSL https://get.docker.com | sh
 groupadd docker
 usermod -aG docker pi
 apt-get install -y libffi-dev libssl-dev
-apt-get install -y python3 python3-pip
-apt-get remove python-configparser
+apt-get install -y python3-pip
+# apt-get remove python-configparser
 pip3 install docker-compose
 
 #### NEED TO LOG OUT AND BACK IN FOR DOCKER TO WORK ####

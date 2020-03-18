@@ -3,6 +3,7 @@ volumes:
   database:
 
 services:
+  # Database for Historical Data
   rethinkdb:
     build: ./database
     privileged: true
@@ -13,6 +14,12 @@ services:
       - "8080:8080"
       - "28015:28015"
       - "29015:29015"
+
+  # Message Queue for Periodic Tasks
+  redis:
+    image: 'redis:alpine'
+    ports:
+      - "6379:6379"
 
   # flask:
   #   build: ./server
