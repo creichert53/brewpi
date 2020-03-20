@@ -4,13 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bluebird": "^3.7.2",
+    "cron": "^1.8.2",
     "mcp-spi-adc": "^3.0.0",
-    "onoff": "^5.0.1"
+    "onoff": "^5.0.1",
+    "progress-promise": "0.0.6",
+    "zero-fill": "^2.2.3"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^7.1.1"
   }
 }

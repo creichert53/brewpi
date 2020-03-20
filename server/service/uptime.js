@@ -36,17 +36,19 @@ var uptime = () => {
 }
 
 // Keep track of uptime
-new CronJob({
-  cronTime: '* * * * * *',
-  onTick: () => {
-    r.connect({db: 'brewery'}).then(conn => {
-      uptime().then(result => {
-        r.table('reboots').insert(result, {conflict: 'replace'}).run(conn).finally(results => {
-          conn.close()
+module.exports = () => {
+  new CronJob({
+    cronTime: '* * * * * *',
+    onTick: () => {
+      r.connect({db: 'brewery'}).then(conn => {
+        uptime().then(result => {
+          r.table('reboots').insert(result, {conflict: 'replace'}).run(conn).finally(results => {
+            conn.close()
+          })
         })
       })
-    })
-  },
-  runOnInit: true,
-  start: true
-})
+    },
+    runOnInit: true,
+    start: true
+  })
+}

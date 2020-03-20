@@ -18,17 +18,29 @@ var temporal = require('temporal');
  *
  */
 
-"use strict";
-var PID = function(opts) {
-  this.setTimeInterval(opts.dt || 1000);
-  this.setControllerDirection(opts.direction || 'reverse');
-  this.setTuning(opts.kp || 0.5, opts.ki || 0.5, opts.kd || 10);
-  this.setInput(opts.initial || 0);
-  this.setTarget(opts.target || 0);
-  this.setOutputLimits(opts.l_bound || 0, opts.u_bound || 100); // default output limits
-  this.setMode(opts.mode || 'auto');
-
-  this.reset()
+class PID {
+  constructor(
+    direction = 'reverse',
+    kp = 0.5,
+    ki = 0.5,
+    kd = 10,
+    dt = 1000,
+    initial = 0,
+    target = 0,
+    l_bound = 0,
+    u_bound = 100,
+    mode = 'auto'
+  ) {
+    this.setTimeInterval(opts.dt || 1000);
+    this.setControllerDirection(opts.direction || 'reverse');
+    this.setTuning(opts.kp || 0.5, opts.ki || 0.5, opts.kd || 10);
+    this.setInput(opts.initial || 0);
+    this.setTarget(opts.target || 0);
+    this.setOutputLimits(opts.l_bound || 0, opts.u_bound || 100); // default output limits
+    this.setMode(opts.mode || 'auto');
+  
+    this.reset()
+  }
 };
 
 util.inherits(PID, EventEmitter);

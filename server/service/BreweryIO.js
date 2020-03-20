@@ -13,11 +13,11 @@ function Output(pin) {
 Output.prototype.write = function() {
   this.gpio.writeSync(this.isOverridden ? this.overrideValue : this.autoValue)
 }
-Output.prototype.setOn = function() {
+Output.prototype.on = function() {
   this.autoValue = 1
   this.write()
 }
-Output.prototype.setOff = function() {
+Output.prototype.off = function() {
   this.autoValue = 0
   this.write()
 }
@@ -78,7 +78,6 @@ const toTemperature = (value, options) => {
     To: 25.0,
     beta: 3892.0
   })
-  console.log(value)
   if (value != 1023) {
     const resistance = Ro / (1023.0 / value - 1.0)
     steinhart = Math.log(resistance / Ro) / beta

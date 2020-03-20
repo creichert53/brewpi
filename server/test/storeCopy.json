@@ -1,0 +1,13 @@
+{
+  "recipe": {
+    "name": "Coopers Pale Ale",
+    "version": 1,
+    "type": "All Grain",
+    "brewer": "Andrew Clark",
+    "asst_brewer": "",
+    "batch_size": 23.02,
+    "boil_size": 37.1203164,
+    "boil_time": 90,
+    "efficiency": 68
+  }
+}
