@@ -1,0 +1,1499 @@
+{
+  "name": "Holy Hops India Pale Ale",
+  "version": 1,
+  "type": "All Grain",
+  "brewer": "Chris Reichert",
+  "asst_brewer": "",
+  "batch_size": 18.9270589,
+  "boil_size": 29.1855249,
+  "boil_time": 90,
+  "efficiency": 72,
+  "hops": [
+    {
+      "name": "Sterling",
+      "version": 1,
+      "origin": "U.S.",
+      "alpha": 7.5,
+      "amount": 0.0141747,
+      "use": "Boil",
+      "time": 75,
+      "notes": "Flavor is a cross between Saaz and Mt Hood\nUsed for: Lagers, Ales, Pilsners\nAroma: Herbal, spicy, some floral and citrus hints\nSubstitutes: Saaz, Polish Lublin",
+      "type": "Both",
+      "form": "Pellet",
+      "beta": 5,
+      "hsi": 30,
+      "display_amount": "0.50 oz",
+      "inventory": "0.00 oz",
+      "display_time": "75.0 min",
+      "id": "600cf9ff-3777-42a9-8244-ee760658ae5d",
+      "complete": false
+    },
+    {
+      "name": "Sterling",
+      "version": 1,
+      "origin": "U.S.",
+      "alpha": 7.5,
+      "amount": 0.0212621,
+      "use": "Boil",
+      "time": 60,
+      "notes": "Flavor is a cross between Saaz and Mt Hood\nUsed for: Lagers, Ales, Pilsners\nAroma: Herbal, spicy, some floral and citrus hints\nSubstitutes: Saaz, Polish Lublin",
+      "type": "Both",
+      "form": "Pellet",
+      "beta": 5,
+      "hsi": 30,
+      "display_amount": "0.75 oz",
+      "inventory": "0.00 oz",
+      "display_time": "60.0 min",
+      "id": "2691c94f-2875-4e3e-b70d-18a7b04cf700",
+      "complete": false
+    },
+    {
+      "name": "Sterling",
+      "version": 1,
+      "origin": "U.S.",
+      "alpha": 7.5,
+      "amount": 0.0212621,
+      "use": "Boil",
+      "time": 30,
+      "notes": "Flavor is a cross between Saaz and Mt Hood\nUsed for: Lagers, Ales, Pilsners\nAroma: Herbal, spicy, some floral and citrus hints\nSubstitutes: Saaz, Polish Lublin",
+      "type": "Both",
+      "form": "Pellet",
+      "beta": 5,
+      "hsi": 30,
+      "display_amount": "0.75 oz",
+      "inventory": "0.00 oz",
+      "display_time": "30.0 min",
+      "id": "2987974c-d119-4798-a025-7cffc03f9d1b",
+      "complete": false
+    },
+    {
+      "name": "Mt. Hood",
+      "version": 1,
+      "origin": "U.S.",
+      "alpha": 6,
+      "amount": 0.0212621,
+      "use": "Boil",
+      "time": 10,
+      "notes": "Used for: European Lagers, finishing\nAroma: Mild with a clean aroma, neutral flavor. Somewhat pungent.\nSubstitutes: Hallertauer, Liberty, Crystal",
+      "type": "Aroma",
+      "form": "Pellet",
+      "beta": 6.3,
+      "hsi": 40,
+      "display_amount": "0.75 oz",
+      "inventory": "0.00 oz",
+      "display_time": "10.0 min",
+      "id": "abe16251-30c0-457b-8221-1d94f5503be6",
+      "complete": false
+    },
+    {
+      "name": "Willamette",
+      "version": 1,
+      "origin": "U.S.",
+      "alpha": 5.5,
+      "amount": 0.0141747,
+      "use": "Boil",
+      "time": 5,
+      "notes": "Used for: Finishing American and British Ales\nAroma: Mild, grassy, floral, slightly spicy\nSubstitutes: Fuggles, East Kent Goldings\nExamples: Sierra Nevada Porter, Ballard Bitter",
+      "type": "Aroma",
+      "form": "Pellet",
+      "beta": 3.5,
+      "hsi": 40,
+      "display_amount": "0.50 oz",
+      "inventory": "0.00 oz",
+      "display_time": "5.0 min",
+      "id": "da1ab637-8a6a-414b-b9ea-5a66d499ce27",
+      "complete": false
+    },
+    {
+      "name": "Willamette",
+      "version": 1,
+      "origin": "U.S.",
+      "alpha": 5.5,
+      "amount": 0.0141747,
+      "use": "Dry Hop",
+      "time": 10080,
+      "notes": "Used for: Finishing American and British Ales\nAroma: Mild, grassy, floral, slightly spicy\nSubstitutes: Fuggles, East Kent Goldings\nExamples: Sierra Nevada Porter, Ballard Bitter",
+      "type": "Aroma",
+      "form": "Pellet",
+      "beta": 3.5,
+      "hsi": 40,
+      "display_amount": "0.50 oz",
+      "inventory": "0.00 oz",
+      "display_time": "60.0 min",
+      "id": "533cae94-8a51-4796-a633-56dbb702a3fc",
+      "complete": false
+    }
+  ],
+  "fermentables": [
+    {
+      "name": "Pale Malt (2 Row) US",
+      "version": 1,
+      "type": "Grain",
+      "amount": 4.309124,
+      "yield": 79,
+      "color": 2,
+      "add_after_boil": false,
+      "origin": "US",
+      "supplier": "",
+      "notes": "Base malt for all beer styles",
+      "coarse_fine_diff": 1.5,
+      "moisture": 4,
+      "diastatic_power": 140,
+      "protein": 12.3,
+      "max_in_batch": 100,
+      "recommend_mash": true,
+      "ibu_gal_per_lb": 0,
+      "display_amount": "9 lbs 8.0 oz",
+      "inventory": "0.0 oz",
+      "potential": 1.03634,
+      "display_color": "2.0 SRM",
+      "extract_substitute": "Pale Liquid Extract",
+      "id": "c0dcbbd9-6df1-48fb-9912-22dfe85671b8",
+      "complete": false
+    },
+    {
+      "name": "Caramel/Crystal Malt - 20L",
+      "version": 1,
+      "type": "Grain",
+      "amount": 0.907184,
+      "yield": 75,
+      "color": 20,
+      "add_after_boil": false,
+      "origin": "US",
+      "supplier": "",
+      "notes": "Adds body, color and improves head retention.\nAlso called \"Crystal\" malt.",
+      "coarse_fine_diff": 1.5,
+      "moisture": 4,
+      "diastatic_power": 0,
+      "protein": 13.2,
+      "max_in_batch": 20,
+      "recommend_mash": false,
+      "ibu_gal_per_lb": 0,
+      "display_amount": "2 lbs",
+      "inventory": "0.0 oz",
+      "potential": 1.0345,
+      "display_color": "20.0 SRM",
+      "extract_substitute": "",
+      "id": "307224e0-e72b-44ee-8659-5ad08bdbb6ec",
+      "complete": false
+    },
+    {
+      "name": "Munich Malt",
+      "version": 1,
+      "type": "Grain",
+      "amount": 0.226796,
+      "yield": 80,
+      "color": 9,
+      "add_after_boil": false,
+      "origin": "Germany",
+      "supplier": "",
+      "notes": "Malty-sweet flavor characteristic and adds a reddish amber color to the beer.\nDoes not contribute signficantly to body or head retention.\nUse for: Bock, Porter, Marzen, Oktoberfest beers",
+      "coarse_fine_diff": 1.3,
+      "moisture": 5,
+      "diastatic_power": 72,
+      "protein": 11.5,
+      "max_in_batch": 80,
+      "recommend_mash": true,
+      "ibu_gal_per_lb": 0,
+      "display_amount": "8.0 oz",
+      "inventory": "0.0 oz",
+      "potential": 1.0368,
+      "display_color": "9.0 SRM",
+      "extract_substitute": "Amber Liquid Extract",
+      "id": "07dd61f5-8e09-4f85-af7d-d38028e74f31",
+      "complete": false
+    },
+    {
+      "name": "Victory Malt",
+      "version": 1,
+      "type": "Grain",
+      "amount": 0.113398,
+      "yield": 73,
+      "color": 25,
+      "add_after_boil": false,
+      "origin": "US",
+      "supplier": "",
+      "notes": "Toasted malt that adds a \"Biscuit\" or toasted flavor to English ales.\nUse for: Nut brown ales, porters",
+      "coarse_fine_diff": 1.5,
+      "moisture": 4,
+      "diastatic_power": 50,
+      "protein": 13.2,
+      "max_in_batch": 15,
+      "recommend_mash": true,
+      "ibu_gal_per_lb": 0,
+      "display_amount": "4.0 oz",
+      "inventory": "0.0 oz",
+      "potential": 1.03358,
+      "display_color": "25.0 SRM",
+      "extract_substitute": "Caramel/Crystal Malt - 30L",
+      "id": "c57a6557-77da-41f8-8d86-099f406b4b49",
+      "complete": false
+    }
+  ],
+  "miscs": [
+    {
+      "name": "Gypsum (Calcium Sulfate)",
+      "version": 1,
+      "type": "Water Agent",
+      "use": "Mash",
+      "amount": 0.013176,
+      "time": 60,
+      "amount_is_weight": true,
+      "use_for": "Water Agent",
+      "notes": "Reduces PH of water for mashing and sparging. Alters water profile -- used to harden soft water. Use the BeerSmith Water Profile tool to determine amount to add.",
+      "display_amount": "13.18 g",
+      "inventory": "0.00 g",
+      "display_time": "60.0 mins",
+      "batch_size": "5.00 gal",
+      "id": "1e2e03b1-995c-4c2a-8d86-5b7f8326e4fc",
+      "complete": false
+    },
+    {
+      "name": "Baking Soda",
+      "version": 1,
+      "type": "Water Agent",
+      "use": "Mash",
+      "amount": 0.00078,
+      "time": 60,
+      "amount_is_weight": true,
+      "use_for": "Water Agent",
+      "notes": "Baking Soda (NaHCO3) may be used as a water mineral to adjust brewing water for mashing.",
+      "display_amount": "0.78 g",
+      "inventory": "0.00 g",
+      "display_time": "60.0 mins",
+      "batch_size": "5.00 gal",
+      "id": "89adf4a9-7190-4c23-a3cd-e92a548dc77e",
+      "complete": false
+    },
+    {
+      "name": "Epsom Salt (MgSO4)",
+      "version": 1,
+      "type": "Water Agent",
+      "use": "Mash",
+      "amount": 0.000227,
+      "time": 60,
+      "amount_is_weight": true,
+      "use_for": "Water Agent",
+      "notes": "Water agent used to modify water profile. Use the BeerSmith Water Profile tool to determine amount to add.",
+      "display_amount": "0.23 g",
+      "inventory": "0.00 g",
+      "display_time": "60.0 mins",
+      "batch_size": "5.00 gal",
+      "id": "8e4145ce-037d-482d-b2ab-0a2359b7a500",
+      "complete": false
+    },
+    {
+      "name": "Chalk",
+      "version": 1,
+      "type": "Water Agent",
+      "use": "Mash",
+      "amount": 0.000202,
+      "time": 60,
+      "amount_is_weight": true,
+      "use_for": "Water Agent",
+      "notes": "Chalk (CaCO3) can be used as a water addition to adjust mineral content for mashing.",
+      "display_amount": "0.20 g",
+      "inventory": "0.00 g",
+      "display_time": "60.0 mins",
+      "batch_size": "5.00 gal",
+      "id": "ed53ff51-157d-429b-b961-daf9b744afd0",
+      "complete": false
+    },
+    {
+      "name": "Irish Moss",
+      "version": 1,
+      "type": "Fining",
+      "use": "Boil",
+      "amount": 0.004929,
+      "time": 10,
+      "amount_is_weight": false,
+      "use_for": "Clarity",
+      "notes": "Fining agent that aids in the post-boil protein break. Reduces protein chill haze and improves beer clarity.",
+      "display_amount": "1.00 tsp",
+      "inventory": "0.00 tsp",
+      "display_time": "10.0 mins",
+      "batch_size": "5.00 gal",
+      "id": "0c8a7257-a76c-4be2-9338-218bb9b6337a",
+      "complete": false
+    }
+  ],
+  "yeasts": [
+    {
+      "name": "American Ale II",
+      "version": 1,
+      "type": "Ale",
+      "form": "Liquid",
+      "amount": 0.1242088,
+      "amount_is_weight": false,
+      "laboratory": "Wyeast Labs",
+      "product_id": 1272,
+      "min_temperature": 15.5555556,
+      "max_temperature": 22.2222222,
+      "flocculation": "High",
+      "attenuation": 74,
+      "notes": "Clean, tart, nutty flavor. More fruity than Wyeast American Ale yeast.",
+      "best_for": "All American Ales, Brown Ales, Barley Wine",
+      "max_reuse": 5,
+      "times_cultured": 0,
+      "add_to_secondary": false,
+      "display_amount": "124.21 ml",
+      "disp_min_temp": "60.0 F",
+      "disp_max_temp": "72.0 F",
+      "inventory": "0.0 pkg",
+      "culture_date": "14 Jun 2003",
+      "id": "ba2814f4-8760-45aa-a01b-e900d4d6da48",
+      "complete": false
+    }
+  ],
+  "waters": [
+    {
+      "name": "Columbus, OH (HCWP) - Hoppy Bitter Profile",
+      "version": 1,
+      "amount": 38.8004708,
+      "calcium": 109.13711,
+      "bicarbonate": 55.5763495,
+      "sulfate": 250.3600253,
+      "chloride": 24,
+      "sodium": 18.4790777,
+      "magnesium": 8.5792104,
+      "ph": 7,
+      "notes": "Additions to acheive this profile are added to Columbus Hap Cremean water profile",
+      "display_amount": "10.25 gal",
+      "id": "64070ccc-3100-4f54-886d-b57f500d96e4",
+      "complete": false
+    }
+  ],
+  "style": {
+    "name": "American IPA",
+    "version": 1,
+    "category": "India Pale Ale (IPA)",
+    "category_number": 14,
+    "style_letter": "B",
+    "style_guide": "BJCP 2008",
+    "type": "Ale",
+    "og_min": 1.056,
+    "og_max": 1.075,
+    "fg_min": 1.01,
+    "fg_max": 1.018,
+    "ibu_min": 40,
+    "ibu_max": 70,
+    "color_min": 6,
+    "color_max": 15,
+    "carb_min": 2.2,
+    "carb_max": 2.7,
+    "abv_max": 7.5,
+    "abv_min": 5.5,
+    "notes": "A decidedly hoppy and bitter, moderately strong American pale ale. An American version of the historical English style, brewed using American ingredients and attitude.",
+    "profile": "Aroma: A prominent to intense hop aroma with a citrusy, floral, perfume-like, resinous, piney, and/or fruity character derived from American hops. Many versions are dry hopped and can have an additional grassy aroma, although this is not required. Some clean malty sweetness may be found in the background, but should be at a lower level than in English examples. Fruitiness, either from esters or hops, may also be detected in some versions, although a neutral fermentation character is also acceptable. Some alcohol may be noted.\nAppearance: Color ranges from medium gold to medium reddish copper; some versions can have an orange-ish tint. Should be clear, although unfiltered dry-hopped versions may be a bit hazy. Good head stand with white to off-white color should persist.\nFlavor: Hop flavor is medium to high, and should reflect an American hop character with citrusy, floral, resinous, piney or fruity aspects. Medium-high to very high hop bitterness, although the malt backbone will support the strong hop character and provide the best balance. Malt flavor should be low to medium, and is generally clean and malty sweet although some caramel or toasty flavors are acceptable at low levels. No diacetyl. Low fruitiness is acceptable but not required. The bitterness may linger into the aftertaste but should not be harsh. Medium-dry to dry finish. Some clean alcohol flavor can be noted in stronger versions. Oak is inappropriate in this style. May be slightly sulfury, but most examples do not exhibit this character.\nMouthfeel: Smooth, medium-light to medium-bodied mouthfeel without hop-derived astringency, although moderate to medium-high carbonation can combine to render an overall dry sensation in the presence of malt sweetness. Some smooth alcohol warming can and should be sensed in stronger (but not all) versions. Body is generally less than in English counterparts.",
+    "ingredients": "Pale ale malt (well-modified and suitable for single-temperature infusion mashing); American hops; American yeast that can give a clean or slightly fruity profile. Generally all-malt, but mashed at lower temperatures for high attenuation. Water character varies from soft to moderately sulfate. Versions with a noticeable Rye character (“RyePA”) should be entered in the Specialty category.",
+    "examples": "Bell’s Two-Hearted Ale, AleSmith IPA, Russian River Blind Pig IPA, Stone IPA, Three Floyds Alpha King, Great Divide Titan IPA, Bear Republic Racer 5 IPA, Victory Hop Devil, Sierra Nevada Celebration Ale, Anderson Valley Hop Ottin’, Dogfish Head 60 Minute IPA, Founder’s Centennial IPA, Anchor Liberty Ale, Harpoon IPA, Avery IPA",
+    "display_og_min": "1.056 SG",
+    "display_og_max": "1.075 SG",
+    "display_fg_min": "1.010 SG",
+    "display_fg_max": "1.018 SG",
+    "display_color_min": "6.0 SRM",
+    "display_color_max": "15.0 SRM",
+    "og_range": "1.056-1.075 SG",
+    "fg_range": "1.010-1.018 SG",
+    "ibu_range": "40.0-70.0 IBUs",
+    "carb_range": "2.20-2.70 Vols",
+    "color_range": "6.0-15.0 SRM",
+    "abv_range": "5.50-7.50 %"
+  },
+  "equipment": {
+    "name": "RIMS Setup",
+    "version": 1,
+    "boil_size": 29.1855249,
+    "batch_size": 18.9270589,
+    "tun_volume": 58.6738826,
+    "tun_weight": 12.246984,
+    "tun_specific_heat": 0.12,
+    "top_up_water": 0,
+    "trub_chiller_loss": 0.9463529,
+    "evap_rate": 19.4552529,
+    "boil_time": 90,
+    "calc_boil_volume": true,
+    "lauter_deadspace": 3.7854118,
+    "top_up_kettle": 0,
+    "hop_utilization": 100,
+    "cooling_loss_pct": 4,
+    "notes": "Boil off is unknown for this setup right now. Electric in the boil will help improve this.",
+    "display_boil_size": "7.71 gal",
+    "display_batch_size": "5.00 gal",
+    "display_tun_volume": "15.50 gal",
+    "display_tun_weight": "27 lbs",
+    "display_top_up_water": "0.00 gal",
+    "display_trub_chiller_loss": "0.25 gal",
+    "display_lauter_deadspace": "1.00 gal",
+    "display_top_up_kettle": "0.00 gal"
+  },
+  "mash": {
+    "name": "Temperature Mash, 1 Step, Medium Body",
+    "version": 1,
+    "grain_temp": 22.2222222,
+    "tun_temp": 22.2222222,
+    "sparge_temp": 75.5555556,
+    "ph": 5.4,
+    "tun_weight": 432,
+    "tun_specific_heat": 0.12,
+    "equip_adjust": false,
+    "notes": "Temperature mash for use when mashing in a brew pot over a heat source such as the stove. Use heat to maintain desired temperature during the mash.",
+    "display_grain_temp": "72.0 F",
+    "display_tun_temp": "72.0 F",
+    "display_sparge_temp": "168.0 F",
+    "display_tun_weight": "27 lbs"
+  },
+  "notes": "",
+  "taste_notes": "",
+  "taste_rating": 0,
+  "og": 1.046,
+  "fg": 1.01,
+  "carbonation": 2.5,
+  "fermentation_stages": 2,
+  "primary_age": 14,
+  "primary_temp": 19.4444444,
+  "secondary_age": 14,
+  "secondary_temp": 19.4444444,
+  "tertiary_age": 7,
+  "age": 30,
+  "age_temp": 18.3333333,
+  "carbonation_used": "Keg with 14.89 PSI",
+  "forced_carbonation": false,
+  "priming_sugar_name": "Forced Carbonation",
+  "priming_sugar_equiv": 1,
+  "keg_priming_factor": 0.5,
+  "carbonation_temp": 7.2222222,
+  "display_carb_temp": "45.0 F",
+  "date": "28 Mar 2013",
+  "est_og": "1.064 SG",
+  "est_fg": "1.014 SG",
+  "est_color": "8.8 SRM",
+  "ibu": "61.5 IBUs",
+  "ibu_method": "Tinseth",
+  "est_abv": "6.6 %",
+  "abv": "4.7 %",
+  "actual_efficiency": "52.2 %",
+  "calories": "151.6 kcal/12oz",
+  "display_batch_size": "5.00 gal",
+  "display_boil_size": "7.71 gal",
+  "display_og": "1.046 SG",
+  "display_fg": "1.010 SG",
+  "display_primary_temp": "67.0 F",
+  "display_secondary_temp": "67.0 F",
+  "display_tertiary_temp": "65.0 F",
+  "display_age_temp": "65.0 F",
+  "id": "710478e1-37d2-439a-ad51-462407350e3e",
+  "startBrew": false,
+  "mash_steps": [
+    {
+      "name": "Saccharification",
+      "version": 1,
+      "type": "Infusion",
+      "infuse_amount": 14.4910295,
+      "step_time": 90,
+      "step_temp": 65.5555556,
+      "ramp_time": 15,
+      "end_temp": 65.5555556,
+      "description": "Add 19.31 qt of water at 159.0 F",
+      "water_grain_ratio": "1.250 qt/lb",
+      "decoction_amt": "0.00 qt",
+      "infuse_temp": "159.0 F",
+      "display_step_temp": "150.0 F",
+      "display_infuse_amt": "19.31 qt",
+      "id": "3c7c71bf-f7b9-451f-afba-729920a101b5",
+      "complete": false
+    },
+    {
+      "name": "Mash Out",
+      "version": 1,
+      "type": "Temperature",
+      "infuse_amount": 0,
+      "step_time": 10,
+      "step_temp": 75.5555556,
+      "ramp_time": 10,
+      "end_temp": 75.5555556,
+      "description": "Heat to 168.0 F over 10 min",
+      "water_grain_ratio": "1.577 qt/lb",
+      "decoction_amt": "0.00 qt",
+      "infuse_temp": "182.0 F",
+      "display_step_temp": "168.0 F",
+      "display_infuse_amt": "0.00 qt",
+      "id": "370ef82b-1331-4c5e-b03c-2f9a6ec5ffa0",
+      "complete": false
+    }
+  ],
+  "steps": [
+    {
+      "id": "1ceca2d1-bfbe-4115-af91-2c95ca5699cc",
+      "title": "Strike Water",
+      "subheader": "Columbus, OH (HCWP) - Hoppy Bitter Profile",
+      "content": "Add the following ingredients to the Hot Liquor Tank:",
+      "todos": [
+        {
+          "step": "10.25 gal water",
+          "complete": false,
+          "id": "53c9a199-f5b6-4c2a-9ce5-3d170da4f83d"
+        },
+        {
+          "step": "13.18 g Gypsum (Calcium Sulfate)",
+          "complete": false,
+          "id": "5b543a15-8dc2-466a-9052-5db4875842c4"
+        },
+        {
+          "step": "0.78 g Baking Soda",
+          "complete": false,
+          "id": "4676ec00-40e2-458d-bc51-f2910e7ca2a0"
+        },
+        {
+          "step": "0.23 g Epsom Salt (MgSO4)",
+          "complete": false,
+          "id": "084dfb11-d774-4616-b8a8-fa4db7c0f1a5"
+        },
+        {
+          "step": "0.20 g Chalk",
+          "complete": false,
+          "id": "028a2ad5-31d8-4c22-ad00-1f471ba872a2"
+        }
+      ],
+      "objects": [
+        {
+          "name": "Columbus, OH (HCWP) - Hoppy Bitter Profile",
+          "version": 1,
+          "amount": 38.8004708,
+          "calcium": 109.13711,
+          "bicarbonate": 55.5763495,
+          "sulfate": 250.3600253,
+          "chloride": 24,
+          "sodium": 18.4790777,
+          "magnesium": 8.5792104,
+          "ph": 7,
+          "notes": "Additions to acheive this profile are added to Columbus Hap Cremean water profile",
+          "display_amount": "10.25 gal",
+          "id": "64070ccc-3100-4f54-886d-b57f500d96e4",
+          "complete": false
+        },
+        {
+          "name": "Gypsum (Calcium Sulfate)",
+          "version": 1,
+          "type": "Water Agent",
+          "use": "Mash",
+          "amount": 0.013176,
+          "time": 60,
+          "amount_is_weight": true,
+          "use_for": "Water Agent",
+          "notes": "Reduces PH of water for mashing and sparging. Alters water profile -- used to harden soft water. Use the BeerSmith Water Profile tool to determine amount to add.",
+          "display_amount": "13.18 g",
+          "inventory": "0.00 g",
+          "display_time": "60.0 mins",
+          "batch_size": "5.00 gal",
+          "id": "1e2e03b1-995c-4c2a-8d86-5b7f8326e4fc",
+          "complete": false
+        },
+        {
+          "name": "Baking Soda",
+          "version": 1,
+          "type": "Water Agent",
+          "use": "Mash",
+          "amount": 0.00078,
+          "time": 60,
+          "amount_is_weight": true,
+          "use_for": "Water Agent",
+          "notes": "Baking Soda (NaHCO3) may be used as a water mineral to adjust brewing water for mashing.",
+          "display_amount": "0.78 g",
+          "inventory": "0.00 g",
+          "display_time": "60.0 mins",
+          "batch_size": "5.00 gal",
+          "id": "89adf4a9-7190-4c23-a3cd-e92a548dc77e",
+          "complete": false
+        },
+        {
+          "name": "Epsom Salt (MgSO4)",
+          "version": 1,
+          "type": "Water Agent",
+          "use": "Mash",
+          "amount": 0.000227,
+          "time": 60,
+          "amount_is_weight": true,
+          "use_for": "Water Agent",
+          "notes": "Water agent used to modify water profile. Use the BeerSmith Water Profile tool to determine amount to add.",
+          "display_amount": "0.23 g",
+          "inventory": "0.00 g",
+          "display_time": "60.0 mins",
+          "batch_size": "5.00 gal",
+          "id": "8e4145ce-037d-482d-b2ab-0a2359b7a500",
+          "complete": false
+        },
+        {
+          "name": "Chalk",
+          "version": 1,
+          "type": "Water Agent",
+          "use": "Mash",
+          "amount": 0.000202,
+          "time": 60,
+          "amount_is_weight": true,
+          "use_for": "Water Agent",
+          "notes": "Chalk (CaCO3) can be used as a water addition to adjust mineral content for mashing.",
+          "display_amount": "0.20 g",
+          "inventory": "0.00 g",
+          "display_time": "60.0 mins",
+          "batch_size": "5.00 gal",
+          "id": "ed53ff51-157d-429b-b961-daf9b744afd0",
+          "complete": false
+        }
+      ],
+      "complete": false,
+      "type": "PREPARE_STRIKE_WATER"
+    },
+    {
+      "id": "46f14562-06db-4755-9c65-12c01eff1311",
+      "title": "Prepare for Heating Strike Water",
+      "content": "Put valves in recirculating position:",
+      "todos": [
+        {
+          "step": "Open HLT outlet",
+          "complete": false,
+          "id": "6d748024-6285-4feb-8522-c61769f46816"
+        },
+        {
+          "step": "Open pump outlet",
+          "complete": false,
+          "id": "93dabecb-ae5a-44ab-88ce-1fd7e563aa52"
+        },
+        {
+          "step": "Close top Mash Tun inlet so water flows back to HLT",
+          "complete": false,
+          "id": "c38fd7c1-7e13-40c5-ae9b-4709fdd562ed"
+        },
+        {
+          "step": "Close bypass valve from Mash Tun outlet",
+          "complete": false,
+          "id": "191dbde2-af18-4987-89f2-fd997a306916"
+        }
+      ],
+      "complete": false,
+      "type": "PREPARE_FOR_HTL_HEAT"
+    },
+    {
+      "id": "f80665cc-766e-4f49-bed4-d22bea362620",
+      "title": "Heat Strike Water",
+      "content": "Heating strike water to 159.0 F",
+      "objects": [
+        {
+          "name": "Saccharification",
+          "version": 1,
+          "type": "Infusion",
+          "infuse_amount": 14.4910295,
+          "step_time": 90,
+          "step_temp": 65.5555556,
+          "ramp_time": 15,
+          "end_temp": 65.5555556,
+          "description": "Add 19.31 qt of water at 159.0 F",
+          "water_grain_ratio": "1.250 qt/lb",
+          "decoction_amt": "0.00 qt",
+          "infuse_temp": "159.0 F",
+          "display_step_temp": "150.0 F",
+          "display_infuse_amt": "19.31 qt",
+          "id": "3c7c71bf-f7b9-451f-afba-729920a101b5",
+          "complete": false
+        }
+      ],
+      "setpoint": 159,
+      "complete": false,
+      "type": "HEATING"
+    },
+    {
+      "id": "8ac319fa-d231-4d47-a21b-874efcc1a99d",
+      "title": "Fill Mash Tun",
+      "content": "Fill mash tun with 19.31 qt water",
+      "todos": [
+        {
+          "step": "Open top Mash Tun inlet so water flows into the Mash Tun",
+          "complete": false,
+          "id": "c23fa6b1-1596-4e1e-b11f-84eed06163c9"
+        },
+        {
+          "step": "Add 19.31 qt water",
+          "complete": false,
+          "id": "fd723bfe-afab-4000-b192-d37ad7244efa"
+        }
+      ],
+      "complete": false,
+      "setpoint": 159,
+      "type": "ADD_WATER_TO_MASH_TUN"
+    },
+    {
+      "id": "2ee3e54d-ab7c-4410-9215-e0447ef91bf6",
+      "title": "Prepare for Mash Tun Recirculation",
+      "content": "Put valves in recirculating position:",
+      "todos": [
+        {
+          "step": "Close HLT outlet",
+          "complete": false,
+          "id": "71a1a05e-c703-4e78-9dca-a47ced3eadee"
+        },
+        {
+          "step": "Open pump outlet",
+          "complete": false,
+          "id": "05b9242f-5693-4bb1-998d-4f8d3077e58a"
+        },
+        {
+          "step": "Cap top HLT inlet from RIMS tube",
+          "complete": false,
+          "id": "fc1a429e-30d5-4d43-94d0-afa499020f5d"
+        },
+        {
+          "step": "Open top Mash Tun inlet so water flows back to Mash Tun",
+          "complete": false,
+          "id": "7e964e56-d81c-4f69-b84d-97a6d36fb017"
+        },
+        {
+          "step": "Open Mash Tun outlet back to pump",
+          "complete": false,
+          "id": "c74673a3-17b6-4842-ab2e-efe3a16f07bd"
+        },
+        {
+          "step": "Open HLT bypass valve so water flows back to Mash Tun",
+          "complete": false,
+          "id": "5d2f27e3-f630-46c1-8e05-47a2f5700ed1"
+        }
+      ],
+      "complete": false,
+      "type": "PREPARE_FOR_MASH_RECIRC"
+    },
+    {
+      "id": "89047159-b14a-4fb2-a3db-7ed3f4aae649",
+      "title": "Heat Strike Water in Mash Tun",
+      "content": "Heating strike water to 159.0 F",
+      "objects": [
+        {
+          "name": "Saccharification",
+          "version": 1,
+          "type": "Infusion",
+          "infuse_amount": 14.4910295,
+          "step_time": 90,
+          "step_temp": 65.5555556,
+          "ramp_time": 15,
+          "end_temp": 65.5555556,
+          "description": "Add 19.31 qt of water at 159.0 F",
+          "water_grain_ratio": "1.250 qt/lb",
+          "decoction_amt": "0.00 qt",
+          "infuse_temp": "159.0 F",
+          "display_step_temp": "150.0 F",
+          "display_infuse_amt": "19.31 qt",
+          "id": "3c7c71bf-f7b9-451f-afba-729920a101b5",
+          "complete": false
+        }
+      ],
+      "setpoint": 159,
+      "complete": false,
+      "type": "HEATING"
+    },
+    {
+      "id": "9bdc34fe-674c-4a8c-ad34-837e106e8084",
+      "title": "Add Ingredients to Mash Tun",
+      "content": "Add the following ingredients to the Mash Tun:",
+      "todos": [
+        {
+          "step": "9 lbs 8.0 oz Pale Malt (2 Row) US",
+          "complete": false,
+          "id": "3ee56216-0afb-4546-9009-36f3c75ea146"
+        },
+        {
+          "step": "2 lbs Caramel/Crystal Malt - 20L",
+          "complete": false,
+          "id": "70b0ef2c-ed60-4ab7-bda9-2594a2390454"
+        },
+        {
+          "step": "8.0 oz Munich Malt",
+          "complete": false,
+          "id": "940e1217-2533-48f7-8c50-f1ed8418f42b"
+        },
+        {
+          "step": "4.0 oz Victory Malt",
+          "complete": false,
+          "id": "bea7863f-4827-4b32-bd11-508d0605dcc5"
+        },
+        {
+          "step": "13.18 g Gypsum (Calcium Sulfate)",
+          "complete": false,
+          "id": "c2f6c09b-5311-4d5f-9cb0-7d38990590ad"
+        },
+        {
+          "step": "0.78 g Baking Soda",
+          "complete": false,
+          "id": "bac7bd55-3423-452b-97a9-a3cc69142301"
+        },
+        {
+          "step": "0.23 g Epsom Salt (MgSO4)",
+          "complete": false,
+          "id": "7732e37e-da77-4815-b13a-4dcd744ddb9c"
+        },
+        {
+          "step": "0.20 g Chalk",
+          "complete": false,
+          "id": "5f2dfd9a-d2f3-4730-80e7-959bb76f67e5"
+        }
+      ],
+      "objects": [
+        {
+          "name": "Pale Malt (2 Row) US",
+          "version": 1,
+          "type": "Grain",
+          "amount": 4.309124,
+          "yield": 79,
+          "color": 2,
+          "add_after_boil": false,
+          "origin": "US",
+          "supplier": "",
+          "notes": "Base malt for all beer styles",
+          "coarse_fine_diff": 1.5,
+          "moisture": 4,
+          "diastatic_power": 140,
+          "protein": 12.3,
+          "max_in_batch": 100,
+          "recommend_mash": true,
+          "ibu_gal_per_lb": 0,
+          "display_amount": "9 lbs 8.0 oz",
+          "inventory": "0.0 oz",
+          "potential": 1.03634,
+          "display_color": "2.0 SRM",
+          "extract_substitute": "Pale Liquid Extract",
+          "id": "c0dcbbd9-6df1-48fb-9912-22dfe85671b8",
+          "complete": false
+        },
+        {
+          "name": "Caramel/Crystal Malt - 20L",
+          "version": 1,
+          "type": "Grain",
+          "amount": 0.907184,
+          "yield": 75,
+          "color": 20,
+          "add_after_boil": false,
+          "origin": "US",
+          "supplier": "",
+          "notes": "Adds body, color and improves head retention.\nAlso called \"Crystal\" malt.",
+          "coarse_fine_diff": 1.5,
+          "moisture": 4,
+          "diastatic_power": 0,
+          "protein": 13.2,
+          "max_in_batch": 20,
+          "recommend_mash": false,
+          "ibu_gal_per_lb": 0,
+          "display_amount": "2 lbs",
+          "inventory": "0.0 oz",
+          "potential": 1.0345,
+          "display_color": "20.0 SRM",
+          "extract_substitute": "",
+          "id": "307224e0-e72b-44ee-8659-5ad08bdbb6ec",
+          "complete": false
+        },
+        {
+          "name": "Munich Malt",
+          "version": 1,
+          "type": "Grain",
+          "amount": 0.226796,
+          "yield": 80,
+          "color": 9,
+          "add_after_boil": false,
+          "origin": "Germany",
+          "supplier": "",
+          "notes": "Malty-sweet flavor characteristic and adds a reddish amber color to the beer.\nDoes not contribute signficantly to body or head retention.\nUse for: Bock, Porter, Marzen, Oktoberfest beers",
+          "coarse_fine_diff": 1.3,
+          "moisture": 5,
+          "diastatic_power": 72,
+          "protein": 11.5,
+          "max_in_batch": 80,
+          "recommend_mash": true,
+          "ibu_gal_per_lb": 0,
+          "display_amount": "8.0 oz",
+          "inventory": "0.0 oz",
+          "potential": 1.0368,
+          "display_color": "9.0 SRM",
+          "extract_substitute": "Amber Liquid Extract",
+          "id": "07dd61f5-8e09-4f85-af7d-d38028e74f31",
+          "complete": false
+        },
+        {
+          "name": "Victory Malt",
+          "version": 1,
+          "type": "Grain",
+          "amount": 0.113398,
+          "yield": 73,
+          "color": 25,
+          "add_after_boil": false,
+          "origin": "US",
+          "supplier": "",
+          "notes": "Toasted malt that adds a \"Biscuit\" or toasted flavor to English ales.\nUse for: Nut brown ales, porters",
+          "coarse_fine_diff": 1.5,
+          "moisture": 4,
+          "diastatic_power": 50,
+          "protein": 13.2,
+          "max_in_batch": 15,
+          "recommend_mash": true,
+          "ibu_gal_per_lb": 0,
+          "display_amount": "4.0 oz",
+          "inventory": "0.0 oz",
+          "potential": 1.03358,
+          "display_color": "25.0 SRM",
+          "extract_substitute": "Caramel/Crystal Malt - 30L",
+          "id": "c57a6557-77da-41f8-8d86-099f406b4b49",
+          "complete": false
+        },
+        {
+          "name": "Gypsum (Calcium Sulfate)",
+          "version": 1,
+          "type": "Water Agent",
+          "use": "Mash",
+          "amount": 0.013176,
+          "time": 60,
+          "amount_is_weight": true,
+          "use_for": "Water Agent",
+          "notes": "Reduces PH of water for mashing and sparging. Alters water profile -- used to harden soft water. Use the BeerSmith Water Profile tool to determine amount to add.",
+          "display_amount": "13.18 g",
+          "inventory": "0.00 g",
+          "display_time": "60.0 mins",
+          "batch_size": "5.00 gal",
+          "id": "1e2e03b1-995c-4c2a-8d86-5b7f8326e4fc",
+          "complete": false
+        },
+        {
+          "name": "Baking Soda",
+          "version": 1,
+          "type": "Water Agent",
+          "use": "Mash",
+          "amount": 0.00078,
+          "time": 60,
+          "amount_is_weight": true,
+          "use_for": "Water Agent",
+          "notes": "Baking Soda (NaHCO3) may be used as a water mineral to adjust brewing water for mashing.",
+          "display_amount": "0.78 g",
+          "inventory": "0.00 g",
+          "display_time": "60.0 mins",
+          "batch_size": "5.00 gal",
+          "id": "89adf4a9-7190-4c23-a3cd-e92a548dc77e",
+          "complete": false
+        },
+        {
+          "name": "Epsom Salt (MgSO4)",
+          "version": 1,
+          "type": "Water Agent",
+          "use": "Mash",
+          "amount": 0.000227,
+          "time": 60,
+          "amount_is_weight": true,
+          "use_for": "Water Agent",
+          "notes": "Water agent used to modify water profile. Use the BeerSmith Water Profile tool to determine amount to add.",
+          "display_amount": "0.23 g",
+          "inventory": "0.00 g",
+          "display_time": "60.0 mins",
+          "batch_size": "5.00 gal",
+          "id": "8e4145ce-037d-482d-b2ab-0a2359b7a500",
+          "complete": false
+        },
+        {
+          "name": "Chalk",
+          "version": 1,
+          "type": "Water Agent",
+          "use": "Mash",
+          "amount": 0.000202,
+          "time": 60,
+          "amount_is_weight": true,
+          "use_for": "Water Agent",
+          "notes": "Chalk (CaCO3) can be used as a water addition to adjust mineral content for mashing.",
+          "display_amount": "0.20 g",
+          "inventory": "0.00 g",
+          "display_time": "60.0 mins",
+          "batch_size": "5.00 gal",
+          "id": "ed53ff51-157d-429b-b961-daf9b744afd0",
+          "complete": false
+        }
+      ],
+      "setpoint": 150,
+      "complete": false,
+      "type": "ADD_INGREDIENTS"
+    },
+    {
+      "id": "f71995e7-a24d-497c-bb99-0c73c9517123",
+      "title": "Saccharification Heating",
+      "content": "Heat Mash to 150.0 F",
+      "objects": [
+        {
+          "name": "Saccharification",
+          "version": 1,
+          "type": "Infusion",
+          "infuse_amount": 14.4910295,
+          "step_time": 90,
+          "step_temp": 65.5555556,
+          "ramp_time": 15,
+          "end_temp": 65.5555556,
+          "description": "Add 19.31 qt of water at 159.0 F",
+          "water_grain_ratio": "1.250 qt/lb",
+          "decoction_amt": "0.00 qt",
+          "infuse_temp": "159.0 F",
+          "display_step_temp": "150.0 F",
+          "display_infuse_amt": "19.31 qt",
+          "id": "3c7c71bf-f7b9-451f-afba-729920a101b5",
+          "complete": false
+        }
+      ],
+      "setpoint": 150,
+      "type": "HEATING"
+    },
+    {
+      "id": "8a7ff67d-7cb8-4c35-99ff-c94cabf50cd1",
+      "title": "Saccharification Rest",
+      "content": "Holding Mash at 150.0 F for 1 hour 30 minutes",
+      "objects": [
+        {
+          "name": "Saccharification",
+          "version": 1,
+          "type": "Infusion",
+          "infuse_amount": 14.4910295,
+          "step_time": 90,
+          "step_temp": 65.5555556,
+          "ramp_time": 15,
+          "end_temp": 65.5555556,
+          "description": "Add 19.31 qt of water at 159.0 F",
+          "water_grain_ratio": "1.250 qt/lb",
+          "decoction_amt": "0.00 qt",
+          "infuse_temp": "159.0 F",
+          "display_step_temp": "150.0 F",
+          "display_infuse_amt": "19.31 qt",
+          "id": "3c7c71bf-f7b9-451f-afba-729920a101b5",
+          "complete": false
+        }
+      ],
+      "setpoint": 150,
+      "stepTime": 90,
+      "type": "RESTING"
+    },
+    {
+      "id": "5b5a1427-a6a3-414a-b743-787ac9af909c",
+      "title": "Mash Out Heating",
+      "content": "Heat Mash to 168.0 F",
+      "objects": [
+        {
+          "name": "Mash Out",
+          "version": 1,
+          "type": "Temperature",
+          "infuse_amount": 0,
+          "step_time": 10,
+          "step_temp": 75.5555556,
+          "ramp_time": 10,
+          "end_temp": 75.5555556,
+          "description": "Heat to 168.0 F over 10 min",
+          "water_grain_ratio": "1.577 qt/lb",
+          "decoction_amt": "0.00 qt",
+          "infuse_temp": "182.0 F",
+          "display_step_temp": "168.0 F",
+          "display_infuse_amt": "0.00 qt",
+          "id": "370ef82b-1331-4c5e-b03c-2f9a6ec5ffa0",
+          "complete": false
+        }
+      ],
+      "setpoint": 168,
+      "type": "HEATING"
+    },
+    {
+      "id": "18314775-ba51-4be3-a6de-384082e542dd",
+      "title": "Mash Out Rest",
+      "content": "Holding Mash at 168.0 F for 10 minutes",
+      "objects": [
+        {
+          "name": "Mash Out",
+          "version": 1,
+          "type": "Temperature",
+          "infuse_amount": 0,
+          "step_time": 10,
+          "step_temp": 75.5555556,
+          "ramp_time": 10,
+          "end_temp": 75.5555556,
+          "description": "Heat to 168.0 F over 10 min",
+          "water_grain_ratio": "1.577 qt/lb",
+          "decoction_amt": "0.00 qt",
+          "infuse_temp": "182.0 F",
+          "display_step_temp": "168.0 F",
+          "display_infuse_amt": "0.00 qt",
+          "id": "370ef82b-1331-4c5e-b03c-2f9a6ec5ffa0",
+          "complete": false
+        }
+      ],
+      "setpoint": 168,
+      "stepTime": 10,
+      "type": "RESTING"
+    },
+    {
+      "id": "ef847429-edab-4e00-8b16-ad5d0a425e89",
+      "title": "Prepare for Heating Sparge Water",
+      "content": "Put valves in recirculating position:",
+      "todos": [
+        {
+          "step": "Close the Mash Tun outlet valve",
+          "complete": false,
+          "id": "f9667828-6abc-42e2-8bbc-cfa2413d490f"
+        },
+        {
+          "step": "Close the HLT bypass valve",
+          "complete": false,
+          "id": "62b2f05d-0b8d-4c7e-94d3-737f26e46c41"
+        },
+        {
+          "step": "Disconnect the bypass line from the bypass valve and route into the boil kettle from the Mash Tun outlet valve",
+          "complete": false,
+          "id": "1877cca1-cbe5-4610-b49a-bc469bada768"
+        },
+        {
+          "step": "Close boil kettle valve",
+          "complete": false,
+          "id": "100c3ab4-df9e-44e1-b12c-2fc05a8ff2d2"
+        },
+        {
+          "step": "Open HLT outlet",
+          "complete": false,
+          "id": "ec4ef977-ccad-46d9-a0c3-bc4e7a00fed9"
+        },
+        {
+          "step": "Open pump outlet",
+          "complete": false,
+          "id": "2305ad0a-3958-4d1f-8b3a-280d23e74afa"
+        },
+        {
+          "step": "Close top Mash Tun inlet so water flows back to HLT",
+          "complete": false,
+          "id": "28ad06e4-ac2e-494e-ad8b-f40cdc01def7"
+        },
+        {
+          "step": "Remove HLT inlet cap and route back to HLT",
+          "complete": false,
+          "id": "26652f90-4b4d-4018-9515-1d4c54668a1f"
+        }
+      ],
+      "complete": false,
+      "type": "PREPARE_FOR_HTL_HEAT"
+    },
+    {
+      "id": "3704e134-46a7-483a-abb6-8f43e0a13582",
+      "title": "Heat Sparge Water",
+      "content": "Heating sparge water to 168.0 F",
+      "objects": [
+        {
+          "name": "Temperature Mash, 1 Step, Medium Body",
+          "version": 1,
+          "grain_temp": 22.2222222,
+          "tun_temp": 22.2222222,
+          "sparge_temp": 75.5555556,
+          "ph": 5.4,
+          "tun_weight": 432,
+          "tun_specific_heat": 0.12,
+          "equip_adjust": false,
+          "notes": "Temperature mash for use when mashing in a brew pot over a heat source such as the stove. Use heat to maintain desired temperature during the mash.",
+          "display_grain_temp": "72.0 F",
+          "display_tun_temp": "72.0 F",
+          "display_sparge_temp": "168.0 F",
+          "display_tun_weight": "27 lbs"
+        }
+      ],
+      "setpoint": 168,
+      "complete": false,
+      "type": "HEATING"
+    },
+    {
+      "id": "d55315af-c360-4022-9a0c-834ecadb1102",
+      "title": "Sparge",
+      "content": "Open the sparge valves and fill the boil kettle to 7.71 gal",
+      "todos": [
+        {
+          "step": "Boil kettle has been filled to 7.71 gal",
+          "complete": false,
+          "id": "58a5c394-540b-4a51-8b5e-4d89486db4d4"
+        }
+      ],
+      "setpoint": 168,
+      "type": "SPARGE",
+      "complete": false
+    },
+    {
+      "id": "253dffec-5fce-4f55-b7c3-749a6cbd56de",
+      "title": "Prepare for Boil",
+      "content": "Disconnect Mash Setup and  Connect Chiller:",
+      "todos": [
+        {
+          "step": "Close HLT outlet valve.",
+          "complete": false,
+          "id": "5c8076c1-32dc-4aca-8c8a-9b7e0d544f2c"
+        },
+        {
+          "step": "Ensure Mash Tun outlet valve is closed.",
+          "complete": false,
+          "id": "895b2cc9-35af-4494-927f-6481df71b4a4"
+        },
+        {
+          "step": "Disconnect pump inlet into a small bucket allowing liquid to empty from pump and tubing completely.",
+          "complete": false,
+          "id": "8ae74123-ff98-4c0d-a430-38b5da81033a"
+        },
+        {
+          "step": "Disconnect connection from pump outlet to RIMS inlet after liquid has drained.",
+          "complete": false,
+          "id": "dffe0f53-5f50-4a90-b1dc-586e196b3906"
+        },
+        {
+          "step": "Connect from pump outlet to wort chiller inlet.",
+          "complete": false,
+          "id": "b8bcf393-a8b6-49f7-9f89-500ae518d9f2"
+        },
+        {
+          "step": "Connect from pump inlet to boil kettle ball valve.",
+          "complete": false,
+          "id": "04baaeaf-690c-4e8b-a50f-71c5ec7c4974"
+        },
+        {
+          "step": "Connect from wort chiller outlet to whirlpool bulkhead.",
+          "complete": false,
+          "id": "76eb4951-3a90-4b34-9443-4773377fef88"
+        }
+      ],
+      "complete": false,
+      "type": "PREPARE_FOR_BOIL"
+    },
+    {
+      "id": "96cc0664-9d74-4237-afe2-870494744a09",
+      "title": "Bring to Boil",
+      "content": "Bringing the Boil Kettle up to a rolling boil.",
+      "todos": [
+        {
+          "step": "Connect garden hoses to the wort chiller inlet and outlet.",
+          "complete": false,
+          "id": "76b7995b-5653-4008-8bd3-84a5c364a276"
+        },
+        {
+          "step": "Connect the chiller inlet garden hose to the garden spigot.",
+          "complete": false,
+          "id": "2e6ea5bd-d79d-4d40-9cd8-b7f94cd86145"
+        },
+        {
+          "step": "Confirm when the boil kettle begins to boil.",
+          "complete": false,
+          "id": "cd88513b-03bc-473a-93d4-c2422e0f2912"
+        }
+      ],
+      "type": "BOIL",
+      "complete": false
+    },
+    {
+      "id": "14ea6c39-5f23-42fc-a12c-0cb61aa72fc3",
+      "title": "Boil",
+      "content": "Boiling Wort",
+      "objects": [
+        {
+          "step": "1.00 tsp Irish Moss",
+          "complete": false,
+          "id": "055138fe-d1ee-474e-a78f-5d177eef5b4e"
+        },
+        {
+          "step": "0.50 oz Sterling",
+          "complete": false,
+          "id": "58272553-0579-4b6a-b580-325f4bf1e532"
+        },
+        {
+          "step": "0.75 oz Sterling",
+          "complete": false,
+          "id": "ebd07d14-9df7-4f00-89f4-247a1be7346b"
+        },
+        {
+          "step": "0.75 oz Sterling",
+          "complete": false,
+          "id": "8c388470-8aa3-4cec-9887-943431d66a4d"
+        },
+        {
+          "step": "0.75 oz Mt. Hood",
+          "complete": false,
+          "id": "5e36b8a5-6218-4f72-a83e-a93c0267685f"
+        },
+        {
+          "step": "0.50 oz Willamette",
+          "complete": false,
+          "id": "add94275-12e1-40e5-bba4-739f7de96658"
+        }
+      ],
+      "stepTime": 90,
+      "type": "BOIL",
+      "complete": false
+    },
+    {
+      "id": "4dacfa37-53ae-4c5e-a91a-49e536db1296",
+      "title": "Prepare for Wort Chilling",
+      "content": "Put valves in reciculating position and raise boil kettle:",
+      "todos": [
+        {
+          "step": "Open boil kettle outlet valve.",
+          "complete": false,
+          "id": "6a63145d-0402-443b-b2fd-c87d5ea91c53"
+        },
+        {
+          "step": "Ensure whirlpool bulkhead is in the 'recirculation' position.",
+          "complete": false,
+          "id": "2b00c81f-cea5-4ada-960e-3421c38eca94"
+        },
+        {
+          "step": "Run tubing from whirlpool bulkhead 'carboy fill' outlet to carboy.",
+          "complete": false,
+          "id": "17f364c1-6eb3-4dca-98a6-618dc3963446"
+        },
+        {
+          "step": "Raise boil kettle high enough to prime the pump.",
+          "complete": false,
+          "id": "25f6c06f-9267-428e-8dc7-5dfe8bd07bc7"
+        }
+      ],
+      "complete": false,
+      "type": "PREPARE_FOR_WORT_CHILL"
+    },
+    {
+      "id": "d4c95555-6d30-4620-b223-3e269db9f080",
+      "title": "Chilling Wort",
+      "content": "Chilling Wort to 68 °F",
+      "todos": [
+        {
+          "step": "Confirm when outlet of counterflow chiller has reached 68 °F.",
+          "complete": false,
+          "id": "539b13a8-62df-43e7-bbee-888e7d7773e0"
+        },
+        {
+          "step": "Open whirlpool bulkhead to direct the flow of wort into the fermentation vessel.",
+          "complete": false,
+          "id": "43cdcb67-e790-422a-a74b-3a29e8bda317"
+        },
+        {
+          "step": "Confirm when 5.00 gal has been added to the fermenter.",
+          "complete": false,
+          "id": "2e2f324e-bf7b-4f88-9579-758aa3bb3821"
+        }
+      ],
+      "setpoint": 68,
+      "complete": false,
+      "type": "CHILLING"
+    }
+  ],
+  "activeStep": {
+    "id": "1ceca2d1-bfbe-4115-af91-2c95ca5699cc",
+    "title": "Strike Water",
+    "subheader": "Columbus, OH (HCWP) - Hoppy Bitter Profile",
+    "content": "Add the following ingredients to the Hot Liquor Tank:",
+    "todos": [
+      {
+        "step": "10.25 gal water",
+        "complete": false,
+        "id": "53c9a199-f5b6-4c2a-9ce5-3d170da4f83d"
+      },
+      {
+        "step": "13.18 g Gypsum (Calcium Sulfate)",
+        "complete": false,
+        "id": "5b543a15-8dc2-466a-9052-5db4875842c4"
+      },
+      {
+        "step": "0.78 g Baking Soda",
+        "complete": false,
+        "id": "4676ec00-40e2-458d-bc51-f2910e7ca2a0"
+      },
+      {
+        "step": "0.23 g Epsom Salt (MgSO4)",
+        "complete": false,
+        "id": "084dfb11-d774-4616-b8a8-fa4db7c0f1a5"
+      },
+      {
+        "step": "0.20 g Chalk",
+        "complete": false,
+        "id": "028a2ad5-31d8-4c22-ad00-1f471ba872a2"
+      }
+    ],
+    "objects": [
+      {
+        "name": "Columbus, OH (HCWP) - Hoppy Bitter Profile",
+        "version": 1,
+        "amount": 38.8004708,
+        "calcium": 109.13711,
+        "bicarbonate": 55.5763495,
+        "sulfate": 250.3600253,
+        "chloride": 24,
+        "sodium": 18.4790777,
+        "magnesium": 8.5792104,
+        "ph": 7,
+        "notes": "Additions to acheive this profile are added to Columbus Hap Cremean water profile",
+        "display_amount": "10.25 gal",
+        "id": "64070ccc-3100-4f54-886d-b57f500d96e4",
+        "complete": false
+      },
+      {
+        "name": "Gypsum (Calcium Sulfate)",
+        "version": 1,
+        "type": "Water Agent",
+        "use": "Mash",
+        "amount": 0.013176,
+        "time": 60,
+        "amount_is_weight": true,
+        "use_for": "Water Agent",
+        "notes": "Reduces PH of water for mashing and sparging. Alters water profile -- used to harden soft water. Use the BeerSmith Water Profile tool to determine amount to add.",
+        "display_amount": "13.18 g",
+        "inventory": "0.00 g",
+        "display_time": "60.0 mins",
+        "batch_size": "5.00 gal",
+        "id": "1e2e03b1-995c-4c2a-8d86-5b7f8326e4fc",
+        "complete": false
+      },
+      {
+        "name": "Baking Soda",
+        "version": 1,
+        "type": "Water Agent",
+        "use": "Mash",
+        "amount": 0.00078,
+        "time": 60,
+        "amount_is_weight": true,
+        "use_for": "Water Agent",
+        "notes": "Baking Soda (NaHCO3) may be used as a water mineral to adjust brewing water for mashing.",
+        "display_amount": "0.78 g",
+        "inventory": "0.00 g",
+        "display_time": "60.0 mins",
+        "batch_size": "5.00 gal",
+        "id": "89adf4a9-7190-4c23-a3cd-e92a548dc77e",
+        "complete": false
+      },
+      {
+        "name": "Epsom Salt (MgSO4)",
+        "version": 1,
+        "type": "Water Agent",
+        "use": "Mash",
+        "amount": 0.000227,
+        "time": 60,
+        "amount_is_weight": true,
+        "use_for": "Water Agent",
+        "notes": "Water agent used to modify water profile. Use the BeerSmith Water Profile tool to determine amount to add.",
+        "display_amount": "0.23 g",
+        "inventory": "0.00 g",
+        "display_time": "60.0 mins",
+        "batch_size": "5.00 gal",
+        "id": "8e4145ce-037d-482d-b2ab-0a2359b7a500",
+        "complete": false
+      },
+      {
+        "name": "Chalk",
+        "version": 1,
+        "type": "Water Agent",
+        "use": "Mash",
+        "amount": 0.000202,
+        "time": 60,
+        "amount_is_weight": true,
+        "use_for": "Water Agent",
+        "notes": "Chalk (CaCO3) can be used as a water addition to adjust mineral content for mashing.",
+        "display_amount": "0.20 g",
+        "inventory": "0.00 g",
+        "display_time": "60.0 mins",
+        "batch_size": "5.00 gal",
+        "id": "ed53ff51-157d-429b-b961-daf9b744afd0",
+        "complete": false
+      }
+    ],
+    "complete": false,
+    "type": "PREPARE_STRIKE_WATER"
+  }
+}

@@ -9,7 +9,6 @@ const {
   get
 } = require('lodash')
 const accurateInterval = require('accurate-interval')
-const BreweryIO = new (require('./helpers/BreweryIO'))()
 // const Brew = require('./brew')
 // const types = require('../src/Redux/types')
 const {
@@ -20,6 +19,7 @@ const {
   removeIncompleteTemps
 } = require('./database/functions')
 const uptime = require('./helpers/uptime')
+const Recipe = require('./Recipe')
 
 /** Start up the server application */
 require('./app')
@@ -40,12 +40,6 @@ require('./app')
     timeout: 5000, // timeout in ms, default Infinity
   }).
   console.info('Database is open. Continue spinning up server.')
-
-  // Emit the temperatures
-  setInterval(async () => {
-    const temps = await BreweryIO.readTemps()
-    io.emit('new temperature', temps)
-  }, 1000)
 
 //   // Interval that will log the temperatures into the database
 //   const logInterval = () => {
@@ -93,113 +87,95 @@ require('./app')
 //     io.emit('store initial state', store.value)
 //   }
 
-//   /** Open up a socket-io connection with the frontend */
-//   io.on('connection', function (socket) {
-//     console.log('Connected...')
-//     io.emit('clear temp array')
-//     getStoreFromDatabase().then(results => {
-//       socket.emit('store initial state', results.store)
-//       socket.emit('temp array', results.temperatureArray)
-//     })
+  /** Open up a socket-io connection with the frontend */
+  var recipe = null
+  io.on('connection', function (socket) {
+    console.log('Connected...')
 
-      // // Start a changefeed to emit temperatures to the frontend
-      // listenTemperatures().on('event', temps => {
-      //   io.emit('temp array', temps)
-      // })
+    socket.on('disconnect', () => {
+      console.log('disconnected')
+    })
 
-//     socket.on('disconnect', () => {
-//       console.log('disconnected')
-//     })
+    socket.on('action', (action) => {
+      /**
+       * CHANGE IN STATE OF RECIPE
+       */
+      if (action.type === types.NEW_RECIPE || action.type === types.COMPLETE_STEP || action.type === types.START_BREW) {
+        // remove the time object on a new recipe and set the recipe id for temperature logging
+        if (action.type === types.NEW_RECIPE) {
+          recipe = new Recipe(action.payload)
+        }
 
-//     socket.on('action', (action) => {
-//       // do not save the temperature array from redux to the database because that data already exists in another table
-//       if (get(action, 'store.temperatureArray', false)) 
-//         delete action.store.temperatureArray
-
-//       /**
-//        * CHANGE IN STATE OF RECIPE
-//        */
-//       if (action.type === types.NEW_RECIPE || action.type === types.COMPLETE_STEP || action.type === types.START_BREW) {
-//         // remove the time object on a new recipe and set the recipe id for temperature logging
-//         if (action.type === types.NEW_RECIPE) {
-//           delete action.store.time
-//           removeIncompleteTemps()
-
-//           // notify the frontend to clear it's temperature array
-//           io.emit('clear temp array')
-//         }
-
-//         // update the store any time there is a change in step (i.e. new recipe, step is completed, etc)
-//         updateStore(action.store ? {
-//           ...action.store,
-//           recipe: action.payload,
-//           elements: { boil: 0, rims: 0 }
-//         } : store).then(s => {
-//           emitStore(s)
+        // update the store any time there is a change in step (i.e. new recipe, step is completed, etc)
+        // updateStore(action.store ? {
+        //   ...action.store,
+        //   recipe: action.payload,
+        //   elements: { boil: 0, rims: 0 }
+        // } : store).then(s => {
+        //   emitStore(s)
           
-//           // If a new recipe is uploaded, stop any previous brew sessions.
-//           if (action.type === types.NEW_RECIPE || action.type === types.START_BREW) {
-//             initializeBrew()
-//           }
-//         }).catch(err => console.log(err))
-//       }
+        //   // If a new recipe is uploaded, stop any previous brew sessions.
+        //   if (action.type === types.NEW_RECIPE || action.type === types.START_BREW) {
+        //     initializeBrew()
+        //   }
+        // }).catch(err => console.log(err))
+      }
       
-//       /**
-//        * SETTINGS UPDATE
-//        */
-//       if (action.type === types.SETTINGS) {
-//         // If the log temperature setting has changed, update the interval.
-//         if (get(action, 'payload.temperatures.logTemperatures', false) !== get(store, 'value.settings.temperatures.logTemperatures', false)) {
-//           if (action.payload.temperatures.logTemperatures)
-//             logTempsInterval = logInterval()
-//           else
-//             logTempsInterval.clear()
-//         }
+      /**
+       * SETTINGS UPDATE
+       */
+      if (action.type === types.SETTINGS) {
+        // // If the log temperature setting has changed, update the interval.
+        // if (get(action, 'payload.temperatures.logTemperatures', false) !== get(store, 'value.settings.temperatures.logTemperatures', false)) {
+        //   if (action.payload.temperatures.logTemperatures)
+        //     logTempsInterval = logInterval()
+        //   else
+        //     logTempsInterval.clear()
+        // }
         
-//         updateStore(action.store ? { ...action.store, settings: action.payload } : store).then(s => {
-//           emitStore(s)
-//         }).catch(err => console.log(err))
-//       }
+        // updateStore(action.store ? { ...action.store, settings: action.payload } : store).then(s => {
+        //   emitStore(s)
+        // }).catch(err => console.log(err))
+      }
 
-//       /**
-//        * CHART WINDOW UPDATED
-//        */
-//       if (action.type === types.CHART_WINDOW) {
-//         // var newStore = action.store ? { ...action.store } : store
-//         // newStore.settings.temperatures.chartWindow = action.payload
-//         // updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
-//         // getRecipeTemps(store.value.recipe.id, action.payload).then(temps => io.emit('temp array', temps))
+      /**
+       * CHART WINDOW UPDATED
+       */
+      if (action.type === types.CHART_WINDOW) {
+        // var newStore = action.store ? { ...action.store } : store
+        // newStore.settings.temperatures.chartWindow = action.payload
+        // updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
+        // getRecipeTemps(store.value.recipe.id, action.payload).then(temps => io.emit('temp array', temps))
 
-//         // // send the client the new temperature array.
-//         // var filterTime = moment().subtract(store.value.settings && store.value.settings.temperatures.chartWindow, 'm').unix()
-//       }
+        // // send the client the new temperature array.
+        // var filterTime = moment().subtract(store.value.settings && store.value.settings.temperatures.chartWindow, 'm').unix()
+      }
 
-//       /**
-//        * OVERRIDE OUTPUTS
-//        */
-//       if (action.type === types.UPDATE_OUTPUT) {
-//         const outputs = action.store.io
-//         outputs[action.index].value = action.payload
-//         const newStore = action.store ? Object.assign({}, action.store, { io: outputs }) : store
-//         updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
+      /**
+       * OVERRIDE OUTPUTS
+       */
+      if (action.type === types.UPDATE_OUTPUT) {
+        // const outputs = action.store.io
+        // outputs[action.index].value = action.payload
+        // const newStore = action.store ? Object.assign({}, action.store, { io: outputs }) : store
+        // updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
 
-//         // Set the overrides object on gpio so all brew steps can take appropriate action
-//         outputs.forEach((acc,output) => {
-//           if (output.value !== 0) GPIO.setOverride(output.name, output)
-//         })
+        // // Set the overrides object on gpio so all brew steps can take appropriate action
+        // outputs.forEach((acc,output) => {
+        //   if (output.value !== 0) GPIO.setOverride(output.name, output)
+        // })
 
-//         // Initially set the gpio to their correct state
-//         newStore.io && newStore.io.forEach(val => {
-//           if (val.value !== 0) {
-//             GPIO.writeOutput(val.name, val.value === -1 ? 0 : 1)
-//           } else {
-//             GPIO.writeOutput(val.name, GPIO.auto[val.name])
-//           }
-//         })
-//       }
-//     })
-//   })
-
+        // // Initially set the gpio to their correct state
+        // newStore.io && newStore.io.forEach(val => {
+        //   if (val.value !== 0) {
+        //     GPIO.writeOutput(val.name, val.value === -1 ? 0 : 1)
+        //   } else {
+        //     GPIO.writeOutput(val.name, GPIO.auto[val.name])
+        //   }
+        // })
+      }
+    })
+  })
 })()
 
 process.once('SIGUSR2', function () {

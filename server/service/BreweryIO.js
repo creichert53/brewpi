@@ -41,12 +41,23 @@ Output.prototype.currentValue = function() {
 }
 
 function BreweryIO() {
+  /** Initialize the Brewery Outputs */
   this.Pump1 = new Output(15)
   this.Pump2 = new Output(23)
   this.Heat1 = new Output(25)
   this.Heat2 = new Output(24)
   this.Contactor1 = new Output(14)
   this.Contactor2 = new Output(18)
+
+  /** When initializing new BreweryIO object, turn the outputs off */
+  this.Pump1.off()
+  this.Pump2.off()
+  this.Heat1.off()
+  this.Heat2.off()
+  this.Contactor1.off()
+  this.Contactor2.off()
+
+  /** Clean up the outputs if the program is exited */
   process.on('SIGINT', _ => {
     this.Pump1.gpio.unexport()
     this.Pump2.gpio.unexport()

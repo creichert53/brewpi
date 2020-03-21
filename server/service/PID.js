@@ -31,13 +31,13 @@ class PID {
     u_bound = 100,
     mode = 'auto'
   ) {
-    this.setTimeInterval(opts.dt || 1000);
-    this.setControllerDirection(opts.direction || 'reverse');
-    this.setTuning(opts.kp || 0.5, opts.ki || 0.5, opts.kd || 10);
-    this.setInput(opts.initial || 0);
-    this.setTarget(opts.target || 0);
-    this.setOutputLimits(opts.l_bound || 0, opts.u_bound || 100); // default output limits
-    this.setMode(opts.mode || 'auto');
+    this.setTimeInterval(dt)
+    this.setControllerDirection(direction)
+    this.setTuning(kp, ki, kd)
+    this.setInput(initial)
+    this.setTarget(target)
+    this.setOutputLimits(l_bound, u_bound) // default output limits
+    this.setMode(mode);
   
     this.reset()
   }

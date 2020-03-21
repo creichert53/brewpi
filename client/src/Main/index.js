@@ -190,6 +190,7 @@ class ResponsiveDrawer extends React.Component {
           valueProcessors: [ xml2js.processors.parseNumbers, xml2js.processors.parseBooleans ],
         }, function (err, result) {
           const r = formatRecipe(result.recipes.recipe)
+          console.log(JSON.stringify(r, null, 2))
           that.props.newRecipe(r)
         })
       }
@@ -327,7 +328,7 @@ class ResponsiveDrawer extends React.Component {
         </nav>
         <main className={classes.content}>
           <div className={classes.toolbar} />
-          {routes.filter(x => x.path === location.pathname).map((route, i) => <RouteWithSubRoutes key={i} {...route} />)}
+          {/* {routes.filter(x => x.path === location.pathname).map((route, i) => <RouteWithSubRoutes key={i} {...route} />)} */}
         </main>
       </div>
     )
