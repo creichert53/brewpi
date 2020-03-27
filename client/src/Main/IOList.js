@@ -28,13 +28,10 @@ class IOList extends React.Component {
 
   componentDidMount = () => {
     // CREATE SOCKET-IO MIDDLEWARE
-    const urlObj = url.parse(window.location.href)
-    const serverPort = process.env.REACT_APP_SERVER_PORT
-    const qualUrl = `${urlObj.protocol}//${urlObj.hostname}${serverPort ? ':' + serverPort : ''}/outputs`
-    let socket = io(qualUrl)
-    socket.on('output update', val => {
-      this.setState({ outputs: val })
-    })
+    // this.props.socket.on('output update', val => {
+    //   console.log(val)
+    //   // this.setState({ outputs: val })
+    // })
   }
 
   render() {
@@ -66,7 +63,8 @@ IOList.propTypes = {
 }
 
 const mapStateToProps = (state) => ({
-  io: state.io
+  io: state.io,
+  socket: state.socket
 })
 
 export default withStyles(styles, { withTheme: true })(connect(mapStateToProps, {})(IOList))

@@ -32,22 +32,22 @@ const styles = theme => ({
 })
 
 export const Output = (props) => {
-  const { classes, handleOutput, index, value } = props
+  const { classes, handleOutput, index, output } = props
   return (
     <ListItem divider={index < 7 ? true : false}>
-      <ListItemText className={classes.listItemText} primary={value.displayName} />
-      <ToggleButtonGroup value={value.value} exclusive onChange={(e, newValue) => handleOutput(e, newValue, index)}>
+      <ListItemText className={classes.listItemText} primary={output.displayName} />
+      <ToggleButtonGroup value={output.value} exclusive onChange={(e, newValue) => handleOutput(e, index, output.name, newValue)}>
         <ToggleButton value={0}>
           <Typography variant='button'>
             AUTO
           </Typography>
         </ToggleButton>
-        <ToggleButton value={-1} style={value.value === -1 ? { backgroundColor: 'red' } : {}}>
+        <ToggleButton value={-1} style={output.value === -1 ? { backgroundColor: 'red' } : {}}>
           <Typography variant='button'>
             OFF
           </Typography>
         </ToggleButton>
-        <ToggleButton value={1} style={value.value === 1 ? { backgroundColor: 'green' } : {}}>
+        <ToggleButton value={1} style={output.value === 1 ? { backgroundColor: 'green' } : {}}>
           <Typography variant='button'>
             ON
           </Typography>
@@ -60,8 +60,8 @@ Output.propTypes = {
 }
 
 class ControlCenter extends React.Component {
-  handleOutput = (event, newValue, index) => {
-    if (newValue !== null) this.props.updateOutput(index, newValue)
+  handleOutput = (event, index, name, value) => {
+    if (value !== null) this.props.updateOutput(index, name, value)
   }
 
   render() {
@@ -75,7 +75,7 @@ class ControlCenter extends React.Component {
                 subheader={<ListSubheader component='div' style={{ textAlign: 'center' }}>Outputs</ListSubheader>}
               >
                 <Divider/>
-                {outputs.map((value,i) => <Output key={i} index={i} handleOutput={this.handleOutput} classes={classes} value={value} />)}
+                {outputs.map((output, i) => <Output key={i} index={i} handleOutput={this.handleOutput} classes={classes} output={output} />)}
               </List>
             </Card>
           </Grid>

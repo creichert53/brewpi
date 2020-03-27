@@ -41,7 +41,8 @@ const rootReducer = (state, action) => {
 const appendStoreToAction = store => next => action => {
   return next({
     ...action,
-    store: { ...store.getState() }
+    store: { ...store.getState() },
+    types
   })
 }
 
@@ -93,6 +94,12 @@ socket.on('time', time => {
 socket.on('elements', value => {
   store.dispatch({
     type: types.UPDATE_ELEMENTS,
+    payload: value
+  })
+})
+socket.on('output update', value => {
+  store.dispatch({
+    type: types.UPDATE_LIVE_OUTPUT,
     payload: value
   })
 })

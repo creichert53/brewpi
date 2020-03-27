@@ -225,7 +225,7 @@ class Settings extends React.Component {
   }
   handleHeaterChange = event => {
     this.props.saveHeaterSettings({
-      rims: { ...this.props.settings.rims, [event.target.id]: event.target.value }
+      rims: { ...this.props.settings.rims, [event.target.id]: numeral(event.target.value).value() }
     })
   }
   handleBoilChange = event => {
@@ -421,7 +421,6 @@ class Settings extends React.Component {
                 variant='extended'
                 aria-label='save'
                 className={classes.fab}
-                onClick={() => saveSettings(settings)}
               >
                 <SaveIcon className={classes.extendedIcon} />
                 Save

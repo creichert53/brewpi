@@ -1,0 +1,5 @@
+{
+  "verbose": true,
+  "ignore": [".test.js", "node_modules/"],
+  "delay": "5000"
+}
