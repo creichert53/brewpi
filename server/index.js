@@ -160,7 +160,7 @@ const tempsTimer = interval(async () => {
     // if (action.type === types.CHART_WINDOW) {
     //   // var newStore = action.store ? { ...action.store } : store
     //   // newStore.settings.temperatures.chartWindow = action.payload
-    //   // updateStore(newStore).then(s => emitStore(s)).catch(err => console.log(err))
+    //   // updateStore(newStore).then(s => emitStore(s)).catch(err => logger.info(err))
     //   // getRecipeTemps(store.value.recipe.id, action.payload).then(temps => io.emit('temp array', temps))
 
     //   // // send the client the new temperature array.
