@@ -70,20 +70,20 @@ class BreweryIO extends EventEmitter {
     this.Contactor2 = new Output(18, 'contactor2', 'Contactor 2')
   
     /** Listen for Output Updates and send to the Frontend */
-    // this.Pump1.on('update', details => this.emit('output update', details))
-    // this.Pump2.on('update', details => this.emit('output update', details))
-    // this.Heat1.on('update', details => this.emit('output update', details))
-    // this.Heat2.on('update', details => this.emit('output update', details))
-    // this.Contactor1.on('update', details => this.emit('output update', details))
-    // this.Contactor1.on('update', details => this.emit('output update', details))
+    this.Pump1.on('update', details => this.emit('output update', details))
+    this.Pump2.on('update', details => this.emit('output update', details))
+    this.Heat1.on('update', details => this.emit('output update', details))
+    this.Heat2.on('update', details => this.emit('output update', details))
+    this.Contactor1.on('update', details => this.emit('output update', details))
+    this.Contactor1.on('update', details => this.emit('output update', details))
   
     /** When initializing new BreweryIO object, turn the outputs off */
-    // this.Pump1.off()
-    // this.Pump2.off()
-    // this.Heat1.off()
-    // this.Heat2.off()
-    // this.Contactor1.off()
-    // this.Contactor2.off()
+    this.Pump1.off()
+    this.Pump2.off()
+    this.Heat1.off()
+    this.Heat2.off()
+    this.Contactor1.off()
+    this.Contactor2.off()
   }
 }
 
@@ -137,15 +137,15 @@ BreweryIO.prototype.readTemps = async () => {
 }
 
 BreweryIO.prototype.unexportAll = function() {
-  return new Promise((resolve, reject) => {
+  // return new Promise((resolve, reject) => {
     this.Pump1.gpio.unexport()
     this.Pump2.gpio.unexport()
     this.Heat1.gpio.unexport()
     this.Heat2.gpio.unexport()
     this.Contactor1.gpio.unexport()
     this.Contactor2.gpio.unexport()
-    resolve()
-  })
+    // resolve()
+  // })
 }
 
 BreweryIO.prototype.outputs = function() {

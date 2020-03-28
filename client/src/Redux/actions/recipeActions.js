@@ -408,7 +408,8 @@ export const completeStep = (payload, time) => {
 
     dispatch({
       type: COMPLETE_STEP,
-      payload: recipe
+      payload: recipe,
+      stepType: payload.type
     })
   }
 }

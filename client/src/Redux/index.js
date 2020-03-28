@@ -74,11 +74,6 @@ socket.on('new temperature', temps => {
     payload: temps
   })
 })
-socket.on('clear temp array', () => {
-  store.dispatch({
-    type: types.CLEAR_TEMPERATURE_ARRAY
-  })
-})
 socket.on('temp array', temps => {
   store.dispatch({
     type: types.UPDATE_TEMPERATURE_ARRAY,

@@ -7,6 +7,7 @@ const moment = require('moment-timezone')
 const PID = require('./PID')
 const Promise = require('bluebird')
 const BreweryIO = require('./BreweryIO')
+const { get } = require('lodash')
 
 Promise.promisifyAll(redis.RedisClient.prototype)
 
@@ -16,6 +17,10 @@ Promise.promisifyAll(redis.RedisClient.prototype)
 class Recipe extends EventEmitter {
   /** ID of the recipe for mapping the temperature to a specific task. */
   #recipeId = ''
+  /** The Recipe Object */
+  #recipe = {}
+  /** The total time for the recipe. */
+  #totalTime = new Time(0)
   /** Object to read temp inputs and write outputs. */
   #io = new BreweryIO(uuid())
   /** PID Loop to be used by any given step */
@@ -23,62 +28,74 @@ class Recipe extends EventEmitter {
   /** The Redis client for the localhost */
   #redis = redis.createClient()
   /** Update temperature in the Redis table */
-  #updateTemps = async () => {
-    const temps = await this.#io.readTemps()
-    temps.id = uuid() // create a unique identifier
-    temps.stepId = this.#currentStep.id // for tracking purposes keep the step id with the temp datapoint
-    temps.recipeId = this.#recipeId // for tracking purposes keep the recipe id with the temp datapoint
-    temps.unix = moment().tz('America/New_York').unix() // add unix timestamp
-    temps.timestamp = moment().tz('America/New_York').format() // add a utc timestamp with time zone
-    await this.#redis.rpushAsync(['temps', JSON.stringify(temps)]) // append the temps object
-    const llen = await this.#redis.llenAsync('temps') // array length
-    if (llen > 7200) // 2 hrs in seconds
-      await this.#redis.ltrimAsync('temps', 1, llen)
-  }
-  /** The total time for the recipe. */
-  #totalTime = new Time(0)
-  #recipe = {}
+  #updateTemps = new cron({
+    cronTime: '*/2 * * * * *',
+    onTick: async () => {
+      const temps = await this.#io.readTemps()
+      temps.id = uuid() // create a unique identifier
+      temps.stepId = this.#currentStep.id // for tracking purposes keep the step id with the temp datapoint
+      temps.recipeId = this.#recipeId // for tracking purposes keep the recipe id with the temp datapoint
+      temps.unix = moment().tz('America/New_York').unix() // add unix timestamp
+      temps.timestamp = moment().tz('America/New_York').format() // add a utc timestamp with time zone
+      await this.#redis.rpushAsync(['temps', JSON.stringify(temps)]) // append the temps object
+      const llen = await this.#redis.llenAsync('temps') // array length
+      if (llen > 7200) // 2 hrs in seconds
+        await this.#redis.ltrimAsync('temps', 1, llen)
+    },
+    start: false,
+    timeZone: 'America/New_York'
+  })
+  #steps = []
   #currentStep = new Step({ id: 'default' })
-  #goToNextStep = (steps) => {
-    var newStep = steps.shift()
-    switch(newStep.type) {
-      case 'PREPARE_STRIKE_WATER':
-      case 'PREPARE_FOR_HTL_HEAT':
-      case 'PREPARE_FOR_MASH_RECIRC':
-      case 'PREPARE_FOR_BOIL':
-      case 'PREPARE_FOR_WORT_CHILL':
-        newStep = new NoAction(newStep, this.value.id, this.io); break
-      case 'HEATING':
-        newStep = new Heat(newStep, this.value.id, this.io, this.PID); break
-      case 'CHILLING':
-        newStep = new Chill(newStep, this.value.id, this.io); break
-      case 'RESTING':
-        // rest
-        newStep = new Step(newStep, this.value.id); break
-      case 'ADD_INGREDIENTS':
-      case 'ADD_WATER_TO_MASH_TUN':
-      case 'SPARGE':
-        // rest and confirm
-        newStep = new Step(newStep, this.value.id); break
-      case 'BOIL':
-        // boil
-        newStep = new Step(newStep, this.value.id); break
+  #goToNextStep = () => {
+    /** 
+     * If any steps are left to execute, move on to the next one.
+     * Else end the recipe.
+     * */
+    if (this.#steps.length > 0) {
+      var newStep = this.#steps.shift()
+      switch(newStep.type) {
+        case 'PREPARE_STRIKE_WATER':
+        case 'PREPARE_FOR_HTL_HEAT':
+        case 'PREPARE_FOR_MASH_RECIRC':
+        case 'PREPARE_FOR_BOIL':
+        case 'PREPARE_FOR_WORT_CHILL':
+          newStep = new NoAction(newStep, this.value.id, this.io); break
+        case 'HEATING':
+          newStep = new Heat(newStep, this.value.id, this.io, this.PID); break
+        case 'CHILLING':
+          newStep = new Chill(newStep, this.value.id, this.io); break
+        case 'RESTING':
+          // rest
+          newStep = new Step(newStep, this.value.id); break
+        case 'ADD_INGREDIENTS':
+        case 'ADD_WATER_TO_MASH_TUN':
+        case 'SPARGE':
+          // rest and confirm
+          newStep = new Step(newStep, this.value.id); break
+        case 'BOIL':
+          // boil
+          newStep = new Step(newStep, this.value.id); break
+      }
+
+      // stop the current step before resetting the current step to the newly formed step
+      this.currentStep.stop()
+
+      // reset the current step
+      this.currentStep = newStep
+      this.currentStep.start()
+    } else {
+      this.end()
     }
 
-    // stop the current step before resetting the current step to the newly formed step
-    this.currentStep.stop()
-
-    // reset the current step
-    this.currentStep = newStep
-    this.currentStep.start()
-    this.currentStep.on('update temps', () => {
-      this.#updateTemps()
-    })
+    // The current step notifies the recipe that it has completed itself
     this.#currentStep.on('end', () => {
-      if (steps.length > 0)
-        this.#goToNextStep(steps)
-      else
+      if (this.#steps.length > 0) {
+        this.#goToNextStep()
+      } else {
         this.end()
+        this.emit('end') // Notify the server/frontend that everything is completed
+      }
     })
   }
 
@@ -88,17 +105,16 @@ class Recipe extends EventEmitter {
   constructor(recipe) {
     super()
     this.value = recipe || false
+    this.recipeId = get(recipe, 'id', null)
     this.resetTemps()
 
-    this.io.on('output update', update => console.log(update))
+    this.io.on('output update', update => this.emit('output update', update))
 
     if (this.value) {
-      this.#goToNextStep(recipe.steps)
+      this.#steps = recipe.steps
+      this.nextStep()
     }
   }
-
-  /** Reset totalTime back to 0 seconds */
-  resetTime() { this.totalTime = 0 }
 
   set totalTime(s) { this.#totalTime = new Time(s) }
   get totalTime() { return this.#totalTime }
@@ -121,14 +137,32 @@ class Recipe extends EventEmitter {
   get io() { return this.#io }
   get PID() { return this.#PID }
 
+  /** Reset totalTime back to 0 seconds */
+  resetTotalTime() { this.totalTime = 0 }
   resetTemps() { this.#redis.del('temps') }
   start() { this.currentStep.start() }
+  nextStep() {
+    this.#goToNextStep()
+  }
 
-  end() {
-    this.io.unexportAll()
+  /** This function brute force quits the recipe at any point. */
+  async quit() {
+    // TODO Clean up database
+    await this.io.unexportAll()
     this.currentStep.stop()
     this.PID.stopLoop()
-    this.#redis.quit()
+    this.#updateTemps.stop()
+    await this.#redis.quitAsync()
+  }
+
+  /** This function is intendended to cleanly end the recipe. It will save the recipe as a completed brew session into the database. */
+  async end() {
+    // TODO Add database save for recipe
+    await this.io.unexportAll()
+    this.currentStep.stop()
+    this.PID.stopLoop()
+    this.#updateTemps.stop()
+    await this.#redis.quitAsync()
   }
 }
 
@@ -159,8 +193,6 @@ class Step extends EventEmitter {
     onTick: async () => {
       this.#updateRemainingTime(this.#step.stepTime)
       this.#updateStepTime()
-      if (this.stepTime % 2)
-        this.emit('update temps') // tell the recipe holding this step to update the temps object
     },
     start: false,
     timeZone: 'America/New_York'
@@ -175,6 +207,8 @@ class Step extends EventEmitter {
     this.id = step.id
     this.io = breweryIO
     this.PID = PID
+
+    this.resetTime()
   }
 
   /** Reset step and remaining times back to defaults */
@@ -211,6 +245,7 @@ class Step extends EventEmitter {
   start() { this.#timer.start() }
   stop() { this.#timer.stop() }
   complete() {
+    console.log('Recipe finished.')
     this.#timer.stop()
     this.emit('end')
   }

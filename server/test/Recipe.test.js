@@ -58,11 +58,11 @@ describe('Recipe', function() {
       assert.equal(step.remainingTime.value(), 5)
     })
     it('reset time (Recipe) sets totalTime back to 00:00:00', () => {
-      recipe.resetTime()
+      recipe.resetTotalTime()
       assert.equal(recipe.totalTime.toString(), '00:00:00')
     })
     it('reset time (Step) sets stepTime and remainingTime back to 00:00:00', () => {
-      step.resetTime()
+      step.resetTotalTime()
       assert.equal(step.stepTime.toString(), '00:00:00')
       assert.equal(step.remainingTime.toString(), '00:00:00')
     })

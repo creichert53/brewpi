@@ -1,5 +1,6 @@
 {
   "verbose": true,
   "ignore": [".test.js", "node_modules/"],
-  "delay": "5000"
+  "delay": "5000",
+  "signal": "SIGTERM"
 }

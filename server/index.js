@@ -18,6 +18,7 @@ const {
   updateStore,
   removeIncompleteTemps
 } = require('./database/functions')
+const { debounce } = require('lodash')
 const interval = require('accurate-interval')
 const Recipe = require('./service/Recipe')
 
@@ -48,7 +49,7 @@ const tempsTimer = interval(async () => {
   const temps = await recipe.io.readTemps()
   await client.set('temps', JSON.stringify(temps))
   io.emit('new temperature', temps)
-}, 5000, {aligned: true, immediate: true})
+}, 1000, {aligned: true, immediate: true})
 
 ;(async () => {
   // first ensure that the database has been bootstrapped
@@ -68,7 +69,7 @@ const tempsTimer = interval(async () => {
   console.info('Database is open. Continue spinning up server.')
   
   const { store: { recipe: initialRecipe }} = await getStoreFromDatabase()
-  var recipe = new Recipe(initialRecipe) // blank recipe initializing type
+  recipe = new Recipe(initialRecipe) // blank recipe initializing type
   recipe.on('output update', update => console.log(update))
   
   /** Open up a socket-io connection with the frontend */
@@ -100,10 +101,21 @@ const tempsTimer = interval(async () => {
 
       /** NEW RECIPE */
       if (type === types.NEW_RECIPE) {
+        // update the store
         store.recipe = payload
+        await updateStore(store)
+
+        // end the previous recipe
+        await recipe.end()
+
+        // start a new recipet
         recipe = new Recipe(payload)
+
+        // track recipe events
         recipe.on('output update', update => console.log(update))
-        updateStore(store)
+        recipe.on('end', async () => {
+          await recipe.end()
+        })
       }
       
       /** SETTINGS */
@@ -124,6 +136,16 @@ const tempsTimer = interval(async () => {
         } else {
           recipe.io[name].auto()
         }
+      }
+
+      /** COMPLETE STEP */
+      if (type === types.COMPLETE_STEP) {
+        recipe.nextStep()
+      }
+
+      /** START BREW */
+      if (type === types.START_BREW) {
+        recipe.start()
       }
     })
 
@@ -150,17 +172,15 @@ const server = httpServer.listen(port, () => {
   console.log(`HTTP Server is listening on port ${port}`)
 })
 
-const kill = async () => {
-  console.log('Cleaning up long running tasks...')
+const kill = debounce(async () => {
+  console.info('\nCleaning up long running tasks...')
   tempsTimer.clear()
   io.close()
-  // recipe.currentStep.timer.stop()
+  await recipe.quit()
   await client.quitAsync()
-  // await recipe.io.unexportAll()
   await new Promise((resolve) => {
-    server.close(() => { resolve() })
+    server.close(() => resolve())
   })
   setTimeout(() => process.exit(0), 1000)
-}
+}, 1000, { leading: true, trailing: false })
 process.on('SIGINT', () => kill())
-process.on('SIGTERM', () => kill())

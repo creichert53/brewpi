@@ -15,8 +15,10 @@ services:
       - "28015:28015"
       - "29015:29015"
 
-  # Message Queue for Periodic Tasks
+  # Message Queue for Periodic Tasks and Holding Values in Memory
   redis:
+    privileged: true
+    restart: always
     image: 'redis:alpine'
     ports:
       - "6379:6379"
