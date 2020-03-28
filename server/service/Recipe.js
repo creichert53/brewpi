@@ -8,6 +8,7 @@ const PID = require('./PID')
 const Promise = require('bluebird')
 const BreweryIO = require('./BreweryIO')
 const { get } = require('lodash')
+const logger = require('./logger')
 
 Promise.promisifyAll(redis.RedisClient.prototype)
 
@@ -245,7 +246,7 @@ class Step extends EventEmitter {
   start() { this.#timer.start() }
   stop() { this.#timer.stop() }
   complete() {
-    console.log('Recipe finished.')
+    logger.info('Recipe finished.')
     this.#timer.stop()
     this.emit('end')
   }

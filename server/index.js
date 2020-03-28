@@ -21,6 +21,7 @@ const {
 const { debounce } = require('lodash')
 const interval = require('accurate-interval')
 const Recipe = require('./service/Recipe')
+const logger = require('./service/logger')
 
 const port = process.env.REACT_APP_SERVER_PORT || 3001
 
@@ -66,18 +67,18 @@ const tempsTimer = interval(async () => {
     interval: 100, // poll interval in ms, default 250ms
     timeout: 5000, // timeout in ms, default Infinity
   })
-  console.info('Database is open. Continue spinning up server.')
+  logger.info('Database is open. Continue spinning up server.')
   
   const { store: { recipe: initialRecipe }} = await getStoreFromDatabase()
   recipe = new Recipe(initialRecipe) // blank recipe initializing type
-  recipe.on('output update', update => console.log(update))
+  recipe.on('output update', update => logger.info(update))
   
   /** Open up a socket-io connection with the frontend */
   io.on('connection', async (socket) => {
     // Connection and Disconnection from the frontend
-    console.log('Connected...')
+    logger.info('Connected...')
     socket.on('disconnect', () => {
-      console.log('disconnected')
+      logger.info('disconnected')
     })
 
     // Send the intial state of the store to the frontend
@@ -94,7 +95,7 @@ const tempsTimer = interval(async () => {
     socket.on('action', async action => {
       var { type, types, payload, name, store } = action
 
-      console.log(action.type)
+      logger.warn(action.type)
 
       /** Post the current store to Redis */
       await client.set('store', JSON.stringify(store))
@@ -112,7 +113,7 @@ const tempsTimer = interval(async () => {
         recipe = new Recipe(payload)
 
         // track recipe events
-        recipe.on('output update', update => console.log(update))
+        recipe.on('output update', update => logger.info(update))
         recipe.on('end', async () => {
           await recipe.end()
         })
@@ -169,11 +170,11 @@ const tempsTimer = interval(async () => {
 })()
 
 const server = httpServer.listen(port, () => {
-  console.log(`HTTP Server is listening on port ${port}`)
+  logger.info(`HTTP Server is listening on port ${port}`)
 })
 
 const kill = debounce(async () => {
-  console.info('\nCleaning up long running tasks...')
+  logger.info('Cleaning up long running tasks...')
   tempsTimer.clear()
   io.close()
   await recipe.quit()

@@ -2,6 +2,7 @@ const assert = require('assert')
 const { expect } = require('chai')
 const mockRecipe = require('./recipe.json')
 const Recipe = require('../service/Recipe')
+const logger = require('../service/logger')
 
 process.setMaxListeners(30)
 const newRecipe = () => {
@@ -86,7 +87,7 @@ describe('Recipe', function() {
   })
   
   setTimeout(() => {
-    console.log('Ending recipe...')
+    logger.info('Ending recipe...')
     recipe.end()
   }, 1000)
 })

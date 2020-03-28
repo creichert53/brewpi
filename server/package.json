@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "accurate-interval": "^1.0.9",
     "bluebird": "^3.7.2",
+    "chalk": "^3.0.0",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
     "express": "^4.17.1",
@@ -18,6 +20,7 @@
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.28",
     "onoff": "^5.0.1",
+    "pino": "^6.0.0",
     "progress-promise": "0.0.6",
     "redis": "^3.0.2",
     "rethinkdb": "^2.4.2",
@@ -29,6 +32,7 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "mocha": "^7.1.1"
+    "mocha": "^7.1.1",
+    "pino-pretty": "^3.6.1"
   }
 }
