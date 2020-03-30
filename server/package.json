@@ -20,19 +20,19 @@
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.28",
     "onoff": "^5.0.1",
-    "pino": "^6.0.0",
     "progress-promise": "0.0.6",
     "redis": "^3.0.2",
     "rethinkdb": "^2.4.2",
     "socket.io": "^2.3.0",
     "temporal": "^0.7.1",
+    "traverse": "^0.6.6",
     "uuid": "^7.0.2",
     "wait-on": "^4.0.1",
+    "winston": "^3.2.1",
     "zero-fill": "^2.2.3"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "mocha": "^7.1.1",
-    "pino-pretty": "^3.6.1"
+    "mocha": "^7.1.1"
   }
 }

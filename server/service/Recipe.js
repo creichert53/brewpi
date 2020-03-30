@@ -7,7 +7,8 @@ const moment = require('moment-timezone')
 const PID = require('./PID')
 const Promise = require('bluebird')
 const BreweryIO = require('./BreweryIO')
-const { get } = require('lodash')
+const { get, cloneDeep, first } = require('lodash')
+const traverse = require('traverse')
 const logger = require('./logger')
 
 Promise.promisifyAll(redis.RedisClient.prototype)
@@ -38,83 +39,52 @@ class Recipe extends EventEmitter {
       temps.recipeId = this.#recipeId // for tracking purposes keep the recipe id with the temp datapoint
       temps.unix = moment().tz('America/New_York').unix() // add unix timestamp
       temps.timestamp = moment().tz('America/New_York').format() // add a utc timestamp with time zone
-      await this.#redis.rpushAsync(['temps', JSON.stringify(temps)]) // append the temps object
-      const llen = await this.#redis.llenAsync('temps') // array length
+      await this.#redis.rpushAsync(['temp_array', JSON.stringify(temps)]) // append the temps object
+      const llen = await this.#redis.llenAsync('temp_array') // array length
       if (llen > 7200) // 2 hrs in seconds
-        await this.#redis.ltrimAsync('temps', 1, llen)
+        await this.#redis.ltrimAsync('temp_array', 1, llen)
     },
     start: false,
     timeZone: 'America/New_York'
   })
+  /** A timer that updates the recipe total time every second. */
+  #timer = new cron({
+    cronTime: '*/1 * * * * *',
+    onTick: async () => {
+      this.#totalTime.increment()
+    },
+    start: this.value.startBrew || false,
+    timeZone: 'America/New_York'
+  })
   #steps = []
   #currentStep = new Step({ id: 'default' })
-  #goToNextStep = () => {
-    /** 
-     * If any steps are left to execute, move on to the next one.
-     * Else end the recipe.
-     * */
-    if (this.#steps.length > 0) {
-      var newStep = this.#steps.shift()
-      switch(newStep.type) {
-        case 'PREPARE_STRIKE_WATER':
-        case 'PREPARE_FOR_HTL_HEAT':
-        case 'PREPARE_FOR_MASH_RECIRC':
-        case 'PREPARE_FOR_BOIL':
-        case 'PREPARE_FOR_WORT_CHILL':
-          newStep = new NoAction(newStep, this.value.id, this.io); break
-        case 'HEATING':
-          newStep = new Heat(newStep, this.value.id, this.io, this.PID); break
-        case 'CHILLING':
-          newStep = new Chill(newStep, this.value.id, this.io); break
-        case 'RESTING':
-          // rest
-          newStep = new Step(newStep, this.value.id); break
-        case 'ADD_INGREDIENTS':
-        case 'ADD_WATER_TO_MASH_TUN':
-        case 'SPARGE':
-          // rest and confirm
-          newStep = new Step(newStep, this.value.id); break
-        case 'BOIL':
-          // boil
-          newStep = new Step(newStep, this.value.id); break
-      }
-
-      // stop the current step before resetting the current step to the newly formed step
-      this.currentStep.stop()
-
-      // reset the current step
-      this.currentStep = newStep
-      this.currentStep.start()
-    } else {
-      this.end()
-    }
-
-    // The current step notifies the recipe that it has completed itself
-    this.#currentStep.on('end', () => {
-      if (this.#steps.length > 0) {
-        this.#goToNextStep()
-      } else {
-        this.end()
-        this.emit('end') // Notify the server/frontend that everything is completed
-      }
-    })
-  }
 
   /**
    * @param  {object} recipe 
    */
-  constructor(recipe) {
+  constructor(recipe, initialTimes) {
     super()
     this.value = recipe || false
     this.recipeId = get(recipe, 'id', null)
-    this.resetTemps()
 
     this.io.on('output update', update => this.emit('output update', update))
 
     if (this.value) {
-      this.#steps = recipe.steps
-      this.nextStep()
+      if (this.value.startBrew) {
+        this.#timer.start()
+        this.#updateTemps.start()
+      } else {
+        // Reset the temp array on a new recipe that hasn't been started yet
+        this.resetTemps()
+      }
+      this.#steps = cloneDeep(recipe.steps).filter(step => !step.complete)
     }
+
+    const { totalTime, stepTime, remainingTime } = initialTimes || {}
+    this.totalTime = totalTime || 0
+
+    if (this.value.startBrew)
+      this.nextStep(stepTime, remainingTime)
   }
 
   set totalTime(s) { this.#totalTime = new Time(s) }
@@ -140,10 +110,67 @@ class Recipe extends EventEmitter {
 
   /** Reset totalTime back to 0 seconds */
   resetTotalTime() { this.totalTime = 0 }
-  resetTemps() { this.#redis.del('temps') }
-  start() { this.currentStep.start() }
-  nextStep() {
-    this.#goToNextStep()
+  resetTemps() { this.#redis.del('temp_array') }
+  start() {
+    this.value = { ...cloneDeep(this.value), startBrew: true }
+    this.nextStep()
+    this.#timer.start()
+  }
+  nextStep(stepTime, remainingTime) {
+    const nextIncompleteStep = first(this.value.steps.filter(step => !step.complete))
+
+    if (nextIncompleteStep) {
+      /** 
+       * If any steps are left to execute, move on to the next one.
+       * Else end the recipe.
+       * */
+      var newStep = new Step(nextIncompleteStep, this.value.id)
+      switch(nextIncompleteStep.type) {
+        case 'PREPARE_STRIKE_WATER':
+        case 'PREPARE_FOR_HTL_HEAT':
+        case 'PREPARE_FOR_MASH_RECIRC':
+        case 'PREPARE_FOR_BOIL':
+        case 'PREPARE_FOR_WORT_CHILL':
+          logger.trace(`Starting new NoAction step: ${nextIncompleteStep.title}`)
+          newStep = new NoAction(nextIncompleteStep, this.value.id, this.io); break
+        case 'HEATING':
+          logger.trace(`Starting new Heat step: ${nextIncompleteStep.title}`)
+          newStep = new Heat(nextIncompleteStep, this.value.id, this.io, this.PID); break
+        case 'CHILLING':
+          logger.trace(`Starting new Chill step: ${newStep.title}`)
+          newStep = new Chill(nextIncompleteStep, this.value.id, this.io); break
+        case 'RESTING':
+          // rest
+          newStep = new Step(nextIncompleteStep, this.value.id); break
+        case 'ADD_INGREDIENTS':
+        case 'ADD_WATER_TO_MASH_TUN':
+        case 'SPARGE':
+          // rest and confirm
+          newStep = new Step(nextIncompleteStep, this.value.id); break
+        case 'BOIL':
+          // boil
+          newStep = new Step(nextIncompleteStep, this.value.id); break
+      }
+
+      // stop the current step before resetting the current step to the newly formed step
+      this.currentStep.stop()
+
+      // reset the current step
+      this.currentStep = newStep
+      this.currentStep.stepTime = stepTime || 0
+      this.currentStep.remainingTime = remainingTime || 0
+      this.currentStep.start()
+
+      // The current step notifies the recipe that it has completed itself
+      this.currentStep.on('end', () => {
+        this.nextStep()
+      })
+    } else {
+      this.end()
+      this.emit('end') // Notify the server/frontend that everything is completed
+    }
+
+    return nextIncompleteStep
   }
 
   /** This function brute force quits the recipe at any point. */
@@ -153,6 +180,7 @@ class Recipe extends EventEmitter {
     this.currentStep.stop()
     this.PID.stopLoop()
     this.#updateTemps.stop()
+    this.#timer.stop()
     await this.#redis.quitAsync()
   }
 
@@ -163,6 +191,7 @@ class Recipe extends EventEmitter {
     this.currentStep.stop()
     this.PID.stopLoop()
     this.#updateTemps.stop()
+    this.#timer.stop()
     await this.#redis.quitAsync()
   }
 }
@@ -241,12 +270,16 @@ class Step extends EventEmitter {
   get PID() { return this.#PID }
   
   set step(step) { this.#step = step }
+  get step() { return this.#step }
 
   pause() { this.#timer.stop() }
-  start() { this.#timer.start() }
+  start() {
+    logger.trace('STARTING STEP...')
+    this.#timer.start()
+  }
   stop() { this.#timer.stop() }
   complete() {
-    logger.info('Recipe finished.')
+    logger.info('Step Completed')
     this.#timer.stop()
     this.emit('end')
   }
@@ -289,9 +322,9 @@ class Heat extends Step {
     // Listen to the PID output and set the heater output.
     this.PID.on('output', async output => {
       // Get the RIMS temperature
-      const { temp1 } = await breweryIO.readTemps()
+      const { temp2 } = await breweryIO.readTemps()
 
-      this.PID.setInput(temp1)
+      this.PID.setInput(temp2)
       var out = output / 100.0
 
       // Read the status of the pump output and then decide how to handle the heater output

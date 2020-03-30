@@ -200,7 +200,7 @@ class ResponsiveDrawer extends React.Component {
   }
 
   render() {
-    const { classes, theme, history, location, time } = this.props
+    const { classes, theme, history, location, time: { totalTime, stepTime, remainingTime }} = this.props
     const { anchorEl } = this.state
     const open = Boolean(anchorEl)
 
@@ -243,8 +243,8 @@ class ResponsiveDrawer extends React.Component {
               {routes.filter(x => x.path === location.pathname).map((route, i) => route.text)}
             </Typography>
             <CardHeader
-              title={time.totalTime}
-              subheader={time.remainingTime || time.stepTime}
+              title={totalTime}
+              subheader={remainingTime !== '00:00:00' ? remainingTime : stepTime}
               style={{ textAlign: 'right', paddingTop: 0, paddingBottom: 0 }}
             />
             <div>

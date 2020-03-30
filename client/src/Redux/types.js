@@ -1,8 +1,10 @@
 /** RECIPE **/
 module.exports.NEW_RECIPE = 'server/NEW_RECIPE'
 module.exports.COMPLETE_STEP = 'server/COMPLETE_STEP'
+module.exports.COMPLETE_TODO = 'server/COMPLETE_TODO'
 module.exports.START_BREW = 'server/START_BREW'
 module.exports.ADD_INGREDIENT = 'server/ADD_INGREDIENT'
+module.exports.UPDATE_RECIPE = 'UPDATE_RECIPE'
 
 /** SETTINGS **/
 module.exports.HEATER_SETTINGS = 'HEATER_SETTINGS'

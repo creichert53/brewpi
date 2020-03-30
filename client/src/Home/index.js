@@ -35,15 +35,14 @@ import TimerIcon from '@material-ui/icons/Timer'
 import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
 
-import findIndex from 'lodash/findIndex'
-import isEqual from 'lodash/isEqual'
+import { findIndex, isEqual, first } from 'lodash'
 
 import gradient from 'gradient-color'
 import numeral from 'numeral'
 import timeFormat from '../helpers/hhmmss.js'
 import convert from 'convert-units'
 import color from 'color'
-import { completeStep, startBrew, updateChartWindow } from '../Redux/actions'
+import { completeStep, completeTodo, startBrew, updateChartWindow } from '../Redux/actions'
 
 import * as BreweryIcons from '../assets/components/BreweryIcons'
 import TempChart from './TempChart'
@@ -130,8 +129,11 @@ class Home extends React.Component {
     this.setState({ chartWindowAnchorEl: null });
   }
 
-  complete = (payload, time) => {
+  completeStepChecked = (payload, time) => {
     this.props.completeStep(payload, time)
+  }
+  completeTodoChecked = (payload, time) => {
+    this.props.completeTodo(payload, time)
   }
 
   render() {
@@ -142,7 +144,8 @@ class Home extends React.Component {
     const recipeColor = srm[Math.min(numeral(recipe.est_color).value() * 10, theme.colors.srmBeersmith.length * 10 - 1)]
     const boilTime = recipe.boil_time ? timeFormat.fromS(recipe.boil_time * 60) : timeFormat.fromS(0)
     const boilTimeParts = boilTime.split(':')
-    const activeStep = (steps && findIndex(steps, step => !step.complete))
+    const activeStep = steps && first(steps.filter(step => !step.complete))
+    const activeStepIndex = steps && findIndex(steps, step => !step.complete)
 
     // Determine Temp Values
     var temperatures = Object.values(temps)
@@ -153,7 +156,7 @@ class Home extends React.Component {
     temperatures = temperatures.map((v,i) => {
       return {
         ...tempKeys[i],
-        setpoint: recipe.activeStep ? recipe.activeStep.setpoint : null,
+        setpoint: activeStep ? activeStep.setpoint : null,
         color: theme.colors.graph[`temp${String(i+1)}`],
         temperature: v
       }
@@ -166,11 +169,11 @@ class Home extends React.Component {
             <Grid container spacing={2}>
               {temperatures.map((v,i) => {
                 v.setpointAdjusted = v.useSetpointAdjust
-                  ? recipe.activeStep && recipe.activeStep.setpoint + settings.rims.setpointAdjust
-                  : recipe.activeStep && recipe.activeStep.setpoint
+                  ? activeStep && activeStep.setpoint + settings.rims.setpointAdjust
+                  : activeStep && activeStep.setpoint
                 v.progress = (Math.max(Math.min(v.temperature - v.setpointAdjusted, 10), -10) + 10) / 20 * 100
-                v.setpointBar = ((recipe.activeStep && recipe.activeStep.title === 'Heat Strike Water') ||
-                  (recipe.activeStep && recipe.activeStep.title === 'Heat Sparge Water'))
+                v.setpointBar = ((activeStep && activeStep.title === 'Heat Strike Water') ||
+                  (activeStep && activeStep.title === 'Heat Sparge Water'))
                   ? true
                   : false
                 return (
@@ -333,7 +336,7 @@ class Home extends React.Component {
                         }
                         {!recipe.startBrew && <Divider/>}
                         <Stepper
-                          activeStep={activeStep}
+                          activeStep={activeStepIndex}
                           orientation='vertical'
                         >
                           {steps ? steps.map((step, index) => {
@@ -351,7 +354,7 @@ class Home extends React.Component {
                                               control={
                                                 <Checkbox
                                                   checked={todo.complete}
-                                                  onChange={() => this.complete({ id: todo.id, type: 'todo' }, time)}
+                                                  onChange={() => this.completeTodoChecked(todo.id, time)}
                                                   value={todo.id}
                                                 />
                                               }
@@ -362,7 +365,7 @@ class Home extends React.Component {
                                         <Button
                                           variant='contained'
                                           color='primary'
-                                          onClick={() => this.complete({ id: step.id, type: 'step' }, time)}
+                                          onClick={() => this.completeStepChecked(activeStep.id, time)}
                                           disabled={step.todos.filter(todo => !todo.complete).length > 0} // disabled if there are incomplete todos
                                           className={classes.button}
                                         >
@@ -458,6 +461,7 @@ const mapStateToProps = (state) => ({
 
 export default withStyles(styles, { withTheme: true })(connect(mapStateToProps, {
   completeStep,
+  completeTodo,
   startBrew,
   updateChartWindow
 })(Home))

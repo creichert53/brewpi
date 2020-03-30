@@ -1,4 +1,4 @@
-import { NEW_RECIPE, COMPLETE_STEP, START_BREW, ADD_INGREDIENT } from '../types'
+import { NEW_RECIPE, COMPLETE_STEP, COMPLETE_TODO, START_BREW, ADD_INGREDIENT } from '../types'
 
 import { isEqual, trimEnd, cloneDeep, get } from 'lodash'
 
@@ -6,7 +6,6 @@ import uuid from 'uuid/v4'
 import timeFormat from '../../helpers/hhmmss.js'
 import numeral from 'numeral'
 import math from 'mathjs'
-import traverse from 'traverse'
 
 export const stepTypes = {
   PREPARE_STRIKE_WATER: 'PREPARE_STRIKE_WATER',
@@ -385,31 +384,26 @@ export const addIngredient = (ingredient) => {
   }
 }
 
-export const completeStep = (payload, time) => {
+export const completeStep = (id, time) => {
   return (dispatch, getState) => {
     var recipe = cloneDeep(getState().recipe)
-    traverse(recipe).forEach(function(val) {
-      if (val && typeof val === 'object' && val.id && val.id === payload.id) {
-        this.update({
-          ...val,
-          title: `${val.title} - ${time.totalTime}`,
-          complete: true
-        })
-      }
-    })
-
-    // set the active step
-    if (payload.type === 'step') {
-      const incompleteSteps = recipe.steps.filter(step => !step.complete)
-      recipe.activeStep = incompleteSteps.length > 0 ? incompleteSteps[0] : {
-        complete: true
-      }
-    }
-
     dispatch({
       type: COMPLETE_STEP,
       payload: recipe,
-      stepType: payload.type
+      id,
+      time
+    })
+  }
+}
+
+export const completeTodo = (id, time) => {
+  return (dispatch, getState) => {
+    var recipe = cloneDeep(getState().recipe)
+    dispatch({
+      type: COMPLETE_TODO,
+      payload: recipe,
+      id,
+      time
     })
   }
 }

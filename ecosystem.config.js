@@ -5,28 +5,17 @@ const appRoot = path.resolve(__dirname)
 // Options reference: https://pm2.io/doc/en/runtime/reference/ecosystem-file/
 module.exports = {
   apps : [
-    // {
-    //   name: 'server',
-    //   script: '/srv/brewpi/brewpi/server/server.js',
-    //   instances: 1,
-    //   autorestart: true,
-    //   watch: ['/srv/brewpi/brewpi/server'],
-    //   max_memory_restart: '1G',
-    //   env: {
-    //     NODE_ENV: 'development',
-    //     NODE_PATH: appRoot,
-    //     REACT_APP_SERVER_PORT: 3001
-    //   },
-    //   env_production: {
-    //     NODE_ENV: 'production',
-    //     NODE_PATH: appRoot,
-    //     REACT_APP_ENV: 'production',
-    //     REACT_APP_SERVER_PORT: 3001
-    //   },
-    //   args: [
-    //     '--color'
-    //   ]
-    // },
+    {
+      name: 'server',
+      script: '/srv/brewpi/server/index.js',
+      instances: 1,
+      autorestart: true,
+      watch: ['/srv/brewpi/server'],
+      max_memory_restart: '1G',
+      args: [
+        '--color'
+      ]
+    },
     {
       name: 'client',
       cwd: '/srv/brewpi/client',

@@ -1,5 +1,6 @@
 const r = require('rethinkdb')
 const fs = require('fs')
+const cron = require('cron').CronJob
 const cors = require('cors')
 const http = require('http')
 const path = require('path')
@@ -18,8 +19,9 @@ const {
   updateStore,
   removeIncompleteTemps
 } = require('./database/functions')
-const { debounce } = require('lodash')
+const { debounce, cloneDeep } = require('lodash')
 const interval = require('accurate-interval')
+const traverse = require('traverse')
 const Recipe = require('./service/Recipe')
 const logger = require('./service/logger')
 
@@ -45,12 +47,48 @@ var client = redis.createClient()
 
 var recipe = new Recipe()
 
-// Interval to send temps to the frontend
-const tempsTimer = interval(async () => {
-  const temps = await recipe.io.readTemps()
-  await client.set('temps', JSON.stringify(temps))
-  io.emit('new temperature', temps)
-}, 1000, {aligned: true, immediate: true})
+// Interval to send times and temps to the frontend
+const tempLogger = new cron({
+  cronTime: '*/1 * * * * *',
+  onTick: async () => {
+    // Set the temps in the temporary store
+    const temps = await recipe.io.readTemps()
+    await client.setAsync('temps', JSON.stringify(temps))
+
+    // emit the temps and times to the frontent
+    io.emit('new temperature', temps)
+  },
+  start: true,
+  runOnInit: true,
+  timeZone: 'America/New_York'
+})
+const timeLogger = new cron({
+  cronTime: '*/1 * * * * *',
+  onTick: async () => {
+    // Set the times in the temporary store
+    const times = {
+      totalTime: recipe.totalTime.value(),
+      stepTime: recipe.currentStep.stepTime.value(),
+      remainingTime: recipe.currentStep.remainingTime.value()
+    }
+    await client.setAsync('time', JSON.stringify(times, null, 2))
+    
+    io.emit('time', {
+      totalTime: recipe.totalTime.toString(),
+      stepTime: recipe.currentStep.stepTime.toString(),
+      remainingTime: recipe.currentStep.remainingTime.toString()
+    })
+  },
+  start: false,
+  timeZone: 'America/New_York'
+}) 
+
+const updateTodoInRecipe = (recipe, id) => traverse(cloneDeep(recipe)).map(function(node) {
+  if (node && node.id === id) {
+    this.update({ ...node, complete: true })
+  }
+})
+const updateStepInRecipe = (recipe, id) => updateTodoInRecipe(recipe, id)
 
 ;(async () => {
   // first ensure that the database has been bootstrapped
@@ -62,49 +100,75 @@ const tempsTimer = interval(async () => {
   /**
  *  IMPORTANT: the database must be open for this server to work
  */
+  logger.warn('Waiting on rethinkdb and redis...')
   await waitOn({
-    resources: ['tcp:localhost:28015'], // wait for rethinkdb to open
+    resources: ['tcp:localhost:28015', 'tcp:localhost:6379'], // wait for rethinkdb to open
     interval: 100, // poll interval in ms, default 250ms
     timeout: 5000, // timeout in ms, default Infinity
   })
-  logger.info('Database is open. Continue spinning up server.')
+  logger.info('Databases are open. Continue spinning up server.')
   
-  const { store: { recipe: initialRecipe }} = await getStoreFromDatabase()
-  recipe = new Recipe(initialRecipe) // blank recipe initializing type
-  recipe.on('output update', update => logger.info(update))
+  const updateStoreOnChange = async store => {
+    /** Post the current store to Redis and save to the database */
+    await client.set('store', JSON.stringify(store, null, 2))
+    await updateStore(store)
+  }
+
+  const recipeListen = async (recipe) => {
+    recipe.on('output update', update => logger.info(update))
+    recipe.on('end', async () => {
+      await recipe.end()
+    })
+  }
+  
+  // Get the store that is saved on disk and set it in memory
+  const { store } = await getStoreFromDatabase()
+  await client.set('store', JSON.stringify(store, null, 2))
+
+  // Get the time values that are saved in memory (this step assumes it's not a cold start)
+  const times = await client.getAsync('time')
+
+  // Create a new recipe object with the times loaded from memory
+  recipe = new Recipe(store.recipe, times ? JSON.parse(times) : undefined) // blank recipe initializing type
+
+  // Now that the times have been read and fed into the initial recipe create, start the time logger back up
+  timeLogger.start()
+
+  // Listen for emitter events
+  recipeListen(recipe)
   
   /** Open up a socket-io connection with the frontend */
   io.on('connection', async (socket) => {
     // Connection and Disconnection from the frontend
     logger.info('Connected...')
     socket.on('disconnect', () => {
-      logger.info('disconnected')
+      logger.info('Disconnected...')
     })
 
     // Send the intial state of the store to the frontend
-    var { store: initialStore } = await getStoreFromDatabase()
+    var storeString = await client.getAsync('store')
+    var initialStore = JSON.parse(storeString)
     socket.emit('store initial state', initialStore)
     
     // Send the temps to the frontend on each new connection
-    const temps = await client.get('temps')
-    socket.emit('new temperature', JSON.parse(temps))
+    const temps = await client.getAsync('temps')
+    socket.emit('new temperature', JSON.parse(temps || { temp1: 0, temp2: 0, temp3: 0 }))
 
     /**
      * * Actions
     */
     socket.on('action', async action => {
-      var { type, types, payload, name, store } = action
+      var { type, types, payload, store } = action
 
-      logger.warn(action.type)
-
-      /** Post the current store to Redis */
-      await client.set('store', JSON.stringify(store))
+      logger.trace(action.type)
 
       /** NEW RECIPE */
       if (type === types.NEW_RECIPE) {
+        logger.success('New Recipe Imported')
+
         // update the store
         store.recipe = payload
-        await updateStore(store)
+        updateStoreOnChange(store)
 
         // end the previous recipe
         await recipe.end()
@@ -113,23 +177,24 @@ const tempsTimer = interval(async () => {
         recipe = new Recipe(payload)
 
         // track recipe events
-        recipe.on('output update', update => logger.info(update))
-        recipe.on('end', async () => {
-          await recipe.end()
-        })
+        recipeListen(recipe)
       }
       
       /** SETTINGS */
       if (type === types.SETTINGS) {
+        logger.success('Settings Updated')
         const { proportional: kp, integral: ki, derivative: kd, maxOutput: max } = payload.rims
         recipe.PID.setTuning(kp, ki, kd)
         recipe.PID.setOutputLimits(recipe.PID.outMin, max)
         store.settings = payload
-        updateStore(store)
+        updateStoreOnChange(store)
       }
 
       /** UPDATE OUTPUT */
       if (type === types.UPDATE_OUTPUT) {
+        const { name } = action
+        logger.success(`Manually Updating Output: ${name} -> ${payload === -1 ? 'Off' : payload === 1 ? 'On' : 'Auto'}`)
+
         if (payload === -1) {
           recipe.io[name].overrideOff()
         } else if (payload == 1) {
@@ -141,31 +206,31 @@ const tempsTimer = interval(async () => {
 
       /** COMPLETE STEP */
       if (type === types.COMPLETE_STEP) {
-        recipe.nextStep()
+        const { id } = action
+        const newRecipe = updateStepInRecipe(payload, id)
+        recipe.value = newRecipe
+        const nextStep = recipe.nextStep()
+        logger.success(`Completing STEP ${id} -> ${nextStep.id}`)
+        io.emit('update recipe from server', newRecipe)
+        await updateStoreOnChange({ ...cloneDeep(store), recipe: newRecipe })
+      }
+
+      /** COMPLETE TODO */
+      if (type === types.COMPLETE_TODO) {
+        const { id } = action
+        logger.success(`Completing TODO ${id}`)
+        const newRecipe = updateTodoInRecipe(payload, id)
+        await updateStoreOnChange({ ...cloneDeep(store), recipe: newRecipe })
+        io.emit('update recipe from server', newRecipe)
       }
 
       /** START BREW */
       if (type === types.START_BREW) {
+        logger.success(`Starting '${store.recipe.name}'`)
+        await updateStoreOnChange({ ...cloneDeep(store), recipe: { ...cloneDeep(recipe.value), startBrew: true }})
         recipe.start()
       }
     })
-
-    socket.on('start brew', async () => {
-      recipe.start()
-    })
-
-    // /**
-    //  * CHART WINDOW UPDATED
-    //  */
-    // if (action.type === types.CHART_WINDOW) {
-    //   // var newStore = action.store ? { ...action.store } : store
-    //   // newStore.settings.temperatures.chartWindow = action.payload
-    //   // updateStore(newStore).then(s => emitStore(s)).catch(err => logger.info(err))
-    //   // getRecipeTemps(store.value.recipe.id, action.payload).then(temps => io.emit('temp array', temps))
-
-    //   // // send the client the new temperature array.
-    //   // var filterTime = moment().subtract(store.value.settings && store.value.settings.temperatures.chartWindow, 'm').unix()
-    // }
   })
 })()
 
@@ -175,7 +240,8 @@ const server = httpServer.listen(port, () => {
 
 const kill = debounce(async () => {
   logger.info('Cleaning up long running tasks...')
-  tempsTimer.clear()
+  tempLogger.stop()
+  timeLogger.stop()
   io.close()
   await recipe.quit()
   await client.quitAsync()

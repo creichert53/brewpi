@@ -2,6 +2,7 @@ const mcpadc = require('mcp-spi-adc')
 const { defaults } = require('lodash')
 const Gpio = require('onoff').Gpio
 const { EventEmitter } = require('events')
+const logger = require('./logger')
 
 class Output extends EventEmitter {
   constructor (pin, name, displayName) {
@@ -15,9 +16,13 @@ class Output extends EventEmitter {
   }
 }
 
-Output.prototype.write = function(where) {
-  this.gpio.writeSync(this.isOverridden ? this.overrideValue : this.autoValue)
-  this.emit('update', this.details())
+Output.prototype.write = function() {
+  try {
+    this.gpio.writeSync(this.isOverridden ? this.overrideValue : this.autoValue)
+    this.emit('update', this.details())
+  } catch (error) {
+    logger.error(error)
+  }
 }
 Output.prototype.on = function() {
   this.autoValue = 1
