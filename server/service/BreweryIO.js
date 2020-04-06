@@ -18,17 +18,19 @@ class Output extends EventEmitter {
 
 Output.prototype.write = function() {
   try {
-    this.gpio.writeSync(this.isOverridden ? this.overrideValue : this.autoValue)
-    this.emit('update', this.details())
-  } catch (error) {
-    logger.error(error)
-  }
+    this.gpio.writeSync(
+      this.isOverridden
+        ? this.overrideValue
+        : this.autoValue
+    )
+    this.emit('output update', this.details())
+  } catch (error) {}
 }
-Output.prototype.on = function() {
+Output.prototype.autoOn = function() {
   this.autoValue = 1
   this.write()
 }
-Output.prototype.off = function() {
+Output.prototype.autoOff = function() {
   this.autoValue = 0
   this.write()
 }
@@ -54,41 +56,36 @@ Output.prototype.details = function() {
   return {
     displayName: this.displayName,
     name: this.name,
-    liveValue: this.isOverridden && this.currentValue()
-      ? 1
-      : this.isOverridden && !this.currentValue()
-      ? -1
-      : 0
+    liveValue: this.currentValue()
   }
 }
 
 class BreweryIO extends EventEmitter {
-  constructor(uuid) {
+  constructor() {
     super()
     
     /** Initialize the Brewery Outputs */
-    this.Pump1 = new Output(15, 'pump1', 'Pump 1')
-    this.Pump2 = new Output(23, 'pump2', 'Pump 2')
-    this.Heat1 = new Output(25, 'heat1', 'RIMS Tube Element')
-    this.Heat2 = new Output(24, 'heat2', 'Boil Kettle Element')
-    this.Contactor1 = new Output(14, 'contactor1', 'Contactor 1')
-    this.Contactor2 = new Output(18, 'contactor2', 'Contactor 2')
+    this.Pump1 = new Output(15, 'Pump1', 'Pump 1')
+    this.Pump2 = new Output(23, 'Pump2', 'Pump 2')
+    this.Heat1 = new Output(25, 'Heat1', 'RIMS Tube Element')
+    this.Heat2 = new Output(24, 'Heat2', 'Boil Kettle Element')
+    this.Contactor1 = new Output(14, 'Contactor1', 'Contactor 1')
+    this.Contactor2 = new Output(18, 'Contactor2', 'Contactor 2')
   
     /** Listen for Output Updates and send to the Frontend */
-    this.Pump1.on('update', details => this.emit('output update', details))
-    this.Pump2.on('update', details => this.emit('output update', details))
-    this.Heat1.on('update', details => this.emit('output update', details))
-    this.Heat2.on('update', details => this.emit('output update', details))
-    this.Contactor1.on('update', details => this.emit('output update', details))
-    this.Contactor1.on('update', details => this.emit('output update', details))
-  
-    /** When initializing new BreweryIO object, turn the outputs off */
-    this.Pump1.off()
-    this.Pump2.off()
-    this.Heat1.off()
-    this.Heat2.off()
-    this.Contactor1.off()
-    this.Contactor2.off()
+    this.Pump1.on('output update', details => this.emit('output update', details))
+    this.Pump2.on('output update', details => this.emit('output update', details))
+    this.Heat1.on('output update', details => this.emit('output update', details))
+    this.Heat2.on('output update', details => this.emit('output update', details))
+    this.Contactor1.on('output update', details => this.emit('output update', details))
+    this.Contactor1.on('output update', details => this.emit('output update', details))
+
+    this.Pump1.autoOff(),
+    this.Pump2.autoOff(),
+    this.Heat1.autoOff(),
+    this.Heat2.autoOff(),
+    this.Contactor1.autoOff(),
+    this.Contactor2.autoOff()
   }
 }
 
@@ -153,7 +150,9 @@ BreweryIO.prototype.unexportAll = function() {
   // })
 }
 
-BreweryIO.prototype.outputs = function() {
+/** Returns an array of output details with each object containing the displayName, the name, and the current output value.
+ */
+BreweryIO.prototype.outputsSync = function() {
   return [
     this.Pump1.details(),
     this.Pump2.details(),

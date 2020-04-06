@@ -16,6 +16,7 @@
     "@nivo/line": "^0.59.3",
     "color": "^3.1.2",
     "convert-units": "^2.3.4",
+    "dayjs": "^1.8.23",
     "gradient-color": "^2.0.1",
     "helmet": "^3.21.0",
     "jsonfile": "^5.0.0",

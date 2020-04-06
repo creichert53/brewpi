@@ -1,86 +1,159 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { withStyles } from '@material-ui/core/styles'
+import { withStyles, createStyles, useTheme } from '@material-ui/core/styles'
 
 import numeral from 'numeral'
 
-import timeFormat from '../helpers/hhmmss'
-import TempTooltip from './TempTooltip'
+import { ResponsiveLine } from '@nivo/line'
 
-import {
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  LineChart, Line
-} from 'recharts'
-
-class TempChart extends React.Component {
-  render() {
-    const { tempArray, theme, settings } = this.props
-    return (
-      <div style={{ flex: 1, height: 300 }}>
-        <ResponsiveContainer width='100%' height={300}>
-          <LineChart data={tempArray} margin={{top: 5, right: 5, bottom: 3, left: -20}}>
-            <XAxis
-              dataKey='totalTime'
-              domain={['auto', 'auto']}
-              name='Time'
-              tickFormatter={(time) => timeFormat.fromS(time, 'hh:mm:ss').split(':').reduce((acc,val,i) => {
-                var num = numeral(val)
-                if (acc.length === 0 && (num.value() > 0 || i === 1)) {
-                  acc.push(num.format('0'))
-                } else if (num.value() > 0) {
-                  acc.push(num.format('00'))
-                }
-                return acc
-              }, []).join(':')}
-              type='number'
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              domain={['dataMin - 2', 'dataMax + 2']}
-              tickFormatter={(value) => value ? value.toFixed(1) : 0}
-              axisLine={false}
-              tickLine={false}
-              width={80}
-            />
-            <Tooltip isAnimationActive={false} content={<TempTooltip/>}/>
-            <CartesianGrid stroke='#c7c7c7' strokeDasharray='3 3' />
-            <Line
-              stroke={theme.colors.graph.temp1}
-              dot={false}
-              dataKey='temp1'
-              type='monotoneX'
-              connectNulls
-              isAnimationActive={false}
-              name={settings.thermistor1.name}
-            />
-            <Line
-              stroke={theme.colors.graph.temp2}
-              dot={false}
-              dataKey='temp2'
-              type='monotoneX'
-              connectNulls
-              isAnimationActive={false}
-              name={settings.thermistor2.name}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    )
+const styles = (theme) => createStyles({
+  toolTip: {
+    backgroundColor: "white",
+    border: "2px solid " + theme.palette.primary.main,
+    borderRadius: theme.spacing(2),
+    padding: theme.spacing(2),
+    fontFamily: "Helvetica",
+    fontSize: 12,
+    fontWeight: "bold",
+    boxShadow: "0px 5px 15px rgba(0,0,0,0.1)",
+    marginBottom: theme.spacing(2),
   }
-}
+})
 
-TempChart.propTypes = {
+const NewTempChart = props => {
+  const { classes, tempArray } = props
+  const theme = useTheme()
+
+  const { temp1, temp2, temp3 } = theme.colors.graph
+  const colors = [ temp1, temp2, temp3 ]
+
+  const toolTipElement = (props) => {
+    const { point: { color, data }} = props
+    return <div className={classes.toolTip} style={{ borderColor: color, color }}>
+        {numeral(data.y).format('0.0')} °F
+    </div>
+  }
+
+  return (
+    <div style={{ flex: 1, height: 300 }}>
+      <ResponsiveLine
+        data={tempArray}
+        margin={{ top: 0, right: 120, bottom: 30, left: 50 }}
+        xScale={{
+          type: 'time',
+          format: '%Y-%m-%dT%H:%M:%S%Z',
+          precision: 'second',
+        }}
+        xFormat="time:%Y-%m-%d"
+        yScale={{
+          type: 'linear',
+          stacked: false,
+          min: 'auto',
+          max: 'auto'
+        }}
+        axisLeft={{
+          legendOffset: 20,
+        }}
+        axisBottom={{
+          format: '%I:%M %p',
+          legendOffset: -12,
+        }}
+        curve='catmullRom'
+        animate={false}
+        useMesh={true}
+        enablePoints={false}
+        enableGridX={false}
+        enableSlices={false}
+        theme={{
+          axis: {
+            ticks: {
+              text: {
+                fill: 'white'
+              }
+            }
+          }
+        }}
+        tooltip={toolTipElement}
+        colors={colors}
+        legends={[
+          {
+            anchor: 'bottom-right',
+            direction: 'column',
+            justify: false,
+            translateX: 100,
+            translateY: 0,
+            itemsSpacing: 0,
+            itemDirection: 'left-to-right',
+            itemWidth: 80,
+            itemHeight: 20,
+            itemOpacity: 0.75,
+            symbolSize: 12,
+            symbolShape: 'circle',
+            textColor: '#fff',
+            itemTextColor: '#fff',
+            effects: [
+              {
+                on: 'hover',
+                style: {
+                  itemBackground: 'rgba(0, 0, 0, .03)',
+                  itemOpacity: 1
+                }
+              }
+            ]
+          }
+        ]}
+      //   style={{ color: 'white' }}
+      //   data={tempArray}
+      //   margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
+      //   xScale={{
+      //     type: 'time',
+      //     format: '%Y-%m-%dT%H:%M:%S%Z',
+      //     precision: 'second'
+      //   }}
+      //   yScale={{ type: 'linear', stacked: false, min: 'auto', max: 'auto' }}
+      //   curve="catmullRom"
+      //   axisTop={null}
+      //   axisRight={null}
+      //   axisBottom={{
+      //     orient: 'bottom',
+      //     tickSize: 5,
+      //     tickPadding: 5,
+      //     tickRotation: 0,
+      //     legend: 'transportation',
+      //     legendOffset: 36,
+      //     legendPosition: 'middle'
+      //   }}
+      //   axisLeft={{
+      //     orient: 'left',
+      //     tickSize: 5,
+      //     tickPadding: 5,
+      //     tickRotation: 0,
+      //     legend: 'count',
+      //     legendOffset: -40,
+      //     legendPosition: 'middle'
+      //   }}
+      //   enableGridX={false}
+      //   colors={{ scheme: 'nivo' }}
+      //   lineWidth={3}
+      //   enablePoints={false}
+      //   pointSize={10}
+      //   pointColor={{ theme: 'background' }}
+      //   pointBorderWidth={2}
+      //   pointBorderColor={{ from: 'serieColor' }}
+      //   pointLabel="y"
+      //   pointLabelYOffset={-12}
+      //   areaBlendMode="lighten"
+      //   areaOpacity={0.3}
+      //   useMesh={true}
+      />
+    </div>
+  )
 }
 
 const mapStateToProps = (state) => ({
-  settings: state.settings.temperatures,
+  settings: state.settings,
   tempArray: state.temperatureArray,
 })
 
-export default withStyles(null, { withTheme: true })(connect(mapStateToProps, {
-})(TempChart))
+export default withStyles(styles)(connect(mapStateToProps, {
+})(NewTempChart))

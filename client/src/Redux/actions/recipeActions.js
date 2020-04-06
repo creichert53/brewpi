@@ -1,4 +1,4 @@
-import { NEW_RECIPE, COMPLETE_STEP, COMPLETE_TODO, START_BREW, ADD_INGREDIENT } from '../types'
+import { NEW_RECIPE, COMPLETE_STEP, COMPLETE_TODO, START_BREW } from '../types'
 
 import { isEqual, trimEnd, cloneDeep, get } from 'lodash'
 
@@ -347,9 +347,6 @@ export const formatRecipe = (recipe) => {
 
   r.steps = steps
 
-  // because this is the initial upload, set the active step as the first step
-  r.activeStep = steps[0]
-
   return r
 }
 
@@ -367,18 +364,6 @@ export const startBrew = () => {
 
     dispatch({
       type: START_BREW,
-      payload: recipe
-    })
-  }
-}
-
-export const addIngredient = (ingredient) => {
-  return (dispatch, getState) => {
-    var recipe = cloneDeep(getState().recipe)
-    recipe.addIngredients = recipe.addIngredients.filter(val => val.id !== ingredient.id)
-
-    dispatch({
-      type: ADD_INGREDIENT,
       payload: recipe
     })
   }

@@ -19,11 +19,19 @@ const {
   updateStore,
   removeIncompleteTemps
 } = require('./database/functions')
-const { debounce, cloneDeep } = require('lodash')
+const { debounce, cloneDeep, get, set, update } = require('lodash')
 const interval = require('accurate-interval')
 const traverse = require('traverse')
 const Recipe = require('./service/Recipe')
 const logger = require('./service/logger')
+const {
+  completeNodeInRecipe,
+  updateStoreOnChange
+} = require('./service/utility')
+const moment = require('moment')
+
+// adjust the global timeout functionality so all timeouts can be cleared from anywhere
+require('./service/timeout')
 
 const port = process.env.REACT_APP_SERVER_PORT || 3001
 
@@ -43,54 +51,59 @@ app.get('/', (req, res) => {
 
 // Initialize the Redis client to log certain values in memory
 Promise.promisifyAll(redis.RedisClient.prototype)
+
+// Initialize variables
 var client = redis.createClient()
 
-var recipe = new Recipe()
+const formatTempArray = async (tempArray) => {
+  const { settings: { temperatures: t }} = JSON.parse(await client.getAsync('store'))
+  const formattedArray = tempArray.reduce((acc,temp) => {
+    const { timestamp, temp1, temp2, temp3 } = JSON.parse(temp)
+    acc.temp1.data = acc.temp1.data.concat({ x: timestamp, y: temp1 })
+    acc.temp2.data = acc.temp2.data.concat({ x: timestamp, y: temp2 })
+    acc.temp3.data = acc.temp3.data.concat({ x: timestamp, y: temp3 })
+    return acc
+  }, {
+    temp1: {
+      id: t.thermistor1.name,
+      data: []
+    },
+    temp2: {
+      id: t.thermistor2.name,
+      data: []
+    },
+    temp3: {
+      id: t.thermistor3.name,
+      data: []
+    }
+  })
+  return Object.values(formattedArray)
+}
 
-// Interval to send times and temps to the frontend
-const tempLogger = new cron({
+var recipe = new Recipe()
+var tempLogger = new cron({
   cronTime: '*/1 * * * * *',
   onTick: async () => {
+
     // Set the temps in the temporary store
     const temps = await recipe.io.readTemps()
     await client.setAsync('temps', JSON.stringify(temps))
 
     // emit the temps and times to the frontent
     io.emit('new temperature', temps)
+
+    // Nivo Chart
+    var tempArray = await formatTempArray(await client.lrangeAsync('temp_array', -900, -1) || [])
+
+    // Send the chart data to the frontend
+    io.emit('temp array', tempArray)
   },
   start: true,
   runOnInit: true,
   timeZone: 'America/New_York'
 })
-const timeLogger = new cron({
-  cronTime: '*/1 * * * * *',
-  onTick: async () => {
-    // Set the times in the temporary store
-    const times = {
-      totalTime: recipe.totalTime.value(),
-      stepTime: recipe.currentStep.stepTime.value(),
-      remainingTime: recipe.currentStep.remainingTime.value()
-    }
-    await client.setAsync('time', JSON.stringify(times, null, 2))
-    
-    io.emit('time', {
-      totalTime: recipe.totalTime.toString(),
-      stepTime: recipe.currentStep.stepTime.toString(),
-      remainingTime: recipe.currentStep.remainingTime.toString()
-    })
-  },
-  start: false,
-  timeZone: 'America/New_York'
-}) 
 
-const updateTodoInRecipe = (recipe, id) => traverse(cloneDeep(recipe)).map(function(node) {
-  if (node && node.id === id) {
-    this.update({ ...node, complete: true })
-  }
-})
-const updateStepInRecipe = (recipe, id) => updateTodoInRecipe(recipe, id)
-
-;(async () => {
+const init = async () => {
   // first ensure that the database has been bootstrapped
   await bootstrapDatabase()
 
@@ -107,17 +120,30 @@ const updateStepInRecipe = (recipe, id) => updateTodoInRecipe(recipe, id)
     timeout: 5000, // timeout in ms, default Infinity
   })
   logger.info('Databases are open. Continue spinning up server.')
-  
-  const updateStoreOnChange = async store => {
-    /** Post the current store to Redis and save to the database */
-    await client.set('store', JSON.stringify(store, null, 2))
-    await updateStore(store)
-  }
 
   const recipeListen = async (recipe) => {
-    recipe.on('output update', update => logger.info(update))
+    recipe.on('output update', update => {
+      io.emit('output update', update)
+    })
+    recipe.on('time', async ({ totalTime, stepTime, remainingTime }) => {
+      // Set the times in the temporary store
+      await client.setAsync('time', JSON.stringify({
+        totalTime: totalTime.value(),
+        stepTime: stepTime.value(),
+        remainingTime: remainingTime.value()
+      }, null, 2))
+      const store = Object.assign({}, JSON.parse(await client.getAsync('store')), {
+        time: {
+          totalTime: totalTime.toString(),
+          stepTime: stepTime.toString(),
+          remainingTime: remainingTime.toString()
+        }
+      })
+      await updateStoreOnChange(store)
+      io.emit('time', store.time)
+    })
     recipe.on('end', async () => {
-      await recipe.end()
+      console.log('recipe completed')
     })
   }
   
@@ -130,9 +156,6 @@ const updateStepInRecipe = (recipe, id) => updateTodoInRecipe(recipe, id)
 
   // Create a new recipe object with the times loaded from memory
   recipe = new Recipe(store.recipe, times ? JSON.parse(times) : undefined) // blank recipe initializing type
-
-  // Now that the times have been read and fed into the initial recipe create, start the time logger back up
-  timeLogger.start()
 
   // Listen for emitter events
   recipeListen(recipe)
@@ -151,8 +174,13 @@ const updateStepInRecipe = (recipe, id) => updateTodoInRecipe(recipe, id)
     socket.emit('store initial state', initialStore)
     
     // Send the temps to the frontend on each new connection
-    const temps = await client.getAsync('temps')
-    socket.emit('new temperature', JSON.parse(temps || { temp1: 0, temp2: 0, temp3: 0 }))
+    socket.emit('new temperature', JSON.parse(await client.getAsync('temps') || { temp1: 0, temp2: 0, temp3: 0 }))
+
+    // FIXME Delete this section after testing. Just want to test sending temps to frontend
+    socket.emit('temp array', await formatTempArray(await client.lrangeAsync('temp_array', -900, -1) || []))
+
+    // Send the initial states of all outputs
+    recipe.io.outputsSync().forEach(out => io.emit('output update', out))
 
     /**
      * * Actions
@@ -173,11 +201,24 @@ const updateStepInRecipe = (recipe, id) => updateTodoInRecipe(recipe, id)
         // end the previous recipe
         await recipe.end()
 
-        // start a new recipet
+        // start a new recipe with new times
         recipe = new Recipe(payload)
 
-        // track recipe events
+        // Immediately after creating a new recipe, listen for events
         recipeListen(recipe)
+
+        // Send the initial states of all outputs
+        recipe.io.outputsSync().forEach(out => io.emit('output update', out))
+
+        // Reset times last
+        recipe.resetTimes()
+      }
+
+      /** START BREW */
+      if (type === types.START_BREW) {
+        logger.success(`Starting '${store.recipe.name}'`)
+        await updateStoreOnChange({ ...cloneDeep(store), recipe: { ...cloneDeep(recipe.value), startBrew: true }})
+        recipe.start()
       }
       
       /** SETTINGS */
@@ -187,6 +228,13 @@ const updateStepInRecipe = (recipe, id) => updateTodoInRecipe(recipe, id)
         recipe.PID.setTuning(kp, ki, kd)
         recipe.PID.setOutputLimits(recipe.PID.outMin, max)
         store.settings = payload
+        updateStoreOnChange(store)
+      }
+      
+      /** CHART WINDOW SETTINGS */
+      if (type === types.SETTINGS) {
+        logger.success('Chart Window Updated')
+        set(store, 'settings.temperatures.chartWindow', payload)
         updateStoreOnChange(store)
       }
 
@@ -207,32 +255,33 @@ const updateStepInRecipe = (recipe, id) => updateTodoInRecipe(recipe, id)
       /** COMPLETE STEP */
       if (type === types.COMPLETE_STEP) {
         const { id } = action
-        const newRecipe = updateStepInRecipe(payload, id)
-        recipe.value = newRecipe
-        const nextStep = recipe.nextStep()
+        const nextStep = await recipe.nextStep()
         logger.success(`Completing STEP ${id} -> ${nextStep.id}`)
-        io.emit('update recipe from server', newRecipe)
-        await updateStoreOnChange({ ...cloneDeep(store), recipe: newRecipe })
+        io.emit('update recipe from server', recipe.value) // value is updated in the nextStep function
       }
 
       /** COMPLETE TODO */
       if (type === types.COMPLETE_TODO) {
         const { id } = action
         logger.success(`Completing TODO ${id}`)
-        const newRecipe = updateTodoInRecipe(payload, id)
+        const newRecipe = completeNodeInRecipe(payload, id)
         await updateStoreOnChange({ ...cloneDeep(store), recipe: newRecipe })
         io.emit('update recipe from server', newRecipe)
       }
 
-      /** START BREW */
-      if (type === types.START_BREW) {
-        logger.success(`Starting '${store.recipe.name}'`)
-        await updateStoreOnChange({ ...cloneDeep(store), recipe: { ...cloneDeep(recipe.value), startBrew: true }})
-        recipe.start()
+      /** COMPLETE TODO */
+      if (type === types.COMPLETE_TODO) {
+        const { id } = action
+        logger.success(`Completing TODO ${id}`)
+        const newRecipe = completeNodeInRecipe(payload, id)
+        await updateStoreOnChange({ ...cloneDeep(store), recipe: newRecipe })
+        io.emit('update recipe from server', newRecipe)
       }
     })
   })
-})()
+}
+
+init()
 
 const server = httpServer.listen(port, () => {
   logger.info(`HTTP Server is listening on port ${port}`)
@@ -241,7 +290,6 @@ const server = httpServer.listen(port, () => {
 const kill = debounce(async () => {
   logger.info('Cleaning up long running tasks...')
   tempLogger.stop()
-  timeLogger.stop()
   io.close()
   await recipe.quit()
   await client.quitAsync()

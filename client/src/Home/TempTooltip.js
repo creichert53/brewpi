@@ -10,7 +10,7 @@ import isEqual from 'lodash/isEqual'
 
 import moment from 'moment-timezone'
 
-import timeFormat from '../helpers/hhmmss'
+import dayjs from 'dayjs'
 
 const muiTheme = createMuiTheme({
   palette: {
@@ -33,7 +33,6 @@ class TempTooltip extends React.Component {
 
     if (true) {
       const { payload } = this.props
-
       return (
         <MuiThemeProvider theme={muiTheme}>
           <Card className={classes.card}>
@@ -41,8 +40,7 @@ class TempTooltip extends React.Component {
               <ListItem>
                 <ListItemText
                   style={{ color: 'black' }}
-                  primary={payload && !isEqual(payload, []) ? timeFormat.fromS(payload[0].payload.totalTime, 'hh:mm:ss') : null}
-                  secondary={payload && !isEqual(payload, []) ? moment.tz(payload[0].payload.time * 1000, 'America/New_York').format('h:mm:ss A') : null}
+                  primary={ payload && !isEqual(payload, []) ? dayjs.unix(payload[0].payload.unix).format('h:mm A') : null }
                 />
               </ListItem>
               {payload && payload.map((line,i) => (

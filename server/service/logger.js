@@ -72,7 +72,7 @@ class CustomLogger {
     this.logger.log('SUCCESS', message)
   }
   error(message) {
-    this.logger.log('ERROR', message)
+    this.logger.log('ERROR', message && message.stack ? message.stack : message)
   }
   critical(message) {
     this.logger.log('CRITICAL', message)
