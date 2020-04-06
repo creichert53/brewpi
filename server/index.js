@@ -20,8 +20,6 @@ const {
   removeIncompleteTemps
 } = require('./database/functions')
 const { debounce, cloneDeep, meanBy, set } = require('lodash')
-const interval = require('accurate-interval')
-const traverse = require('traverse')
 const Recipe = require('./service/Recipe')
 const logger = require('./service/logger')
 const {
@@ -55,15 +53,17 @@ Promise.promisifyAll(redis.RedisClient.prototype)
 // Initialize variables
 var client = redis.createClient()
 
-const formatTempArray = async (tempArray) => {
+const formatNivoTempArray = async (tempArray) => {
+  // Moving average for a 3 second window
   const sma = array => {
     let cloned = cloneDeep(array)
-    for (var i = 6; i < cloned.length; i++) {
-      cloned[i].y = meanBy(cloned.slice(i - 6, i + 1), 'y')
+    for (var i = 3; i < cloned.length; i++) {
+      cloned[i].y = meanBy(cloned.slice(i - 3, i + 1), 'y')
     }
-    return cloned
+    return cloned.slice(6)
   }
 
+  // Reformat the simple array of temperature informtion to something Nivo Charts can use.
   const { settings: { temperatures: t }} = JSON.parse(await client.getAsync('store'))
   const formattedArray = tempArray.reduce((acc,temp) => {
     const { timestamp, temp1, temp2, temp3 } = JSON.parse(temp)
@@ -110,7 +110,7 @@ var tempLogger = new cron({
       const { settings: { temperatures: { chartWindow }}} = JSON.parse(await client.getAsync('store'))
   
       // Nivo Chart
-      var tempArray = await formatTempArray(await client.lrangeAsync('temp_array', -(chartWindow * 60), -1) || [])
+      var tempArray = await formatNivoTempArray(await client.lrangeAsync('temp_array', -(chartWindow * 60), -1) || [])
   
       // Send the chart data to the frontend
       io.emit('temp array', tempArray)
@@ -163,6 +163,10 @@ const init = async () => {
       await updateStoreOnChange(store)
       io.emit('time', store.time)
     })
+    recipe.on('update recipe from server', _ => {
+      logger.trace('Updating the frontend that program is moving to the next step.')
+      io.emit('update recipe from server', recipe.value)
+    })
     recipe.on('end', async () => {
       console.log('recipe completed')
     })
@@ -198,7 +202,7 @@ const init = async () => {
     socket.emit('new temperature', JSON.parse(await client.getAsync('temps') || { temp1: 0, temp2: 0, temp3: 0 }))
 
     // FIXME Delete this section after testing. Just want to test sending temps to frontend
-    socket.emit('temp array', await formatTempArray(await client.lrangeAsync('temp_array', -900, -1) || []))
+    socket.emit('temp array', await formatNivoTempArray(await client.lrangeAsync('temp_array', -900, -1) || []))
 
     // Send the initial states of all outputs
     recipe.io.outputsSync().forEach(out => io.emit('output update', out))

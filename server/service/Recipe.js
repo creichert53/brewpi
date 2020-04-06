@@ -155,8 +155,11 @@ class Recipe extends EventEmitter {
     this.value = completeNodeInRecipe(this.value, this.currentStep.id)
     const store = JSON.parse(await this.#redis.getAsync('store'))
     await updateStoreOnChange({ ...cloneDeep(store), recipe: this.value })
-    const { recipe: { steps } } = JSON.parse(await this.#redis.getAsync('store'))
+    const { recipe: { steps }} = JSON.parse(await this.#redis.getAsync('store'))
     const nextIncompleteStep = first(steps.filter(step => !step.complete))
+
+    // Keep the server up to date with all step changes
+    this.emit('update recipe from server', this.value)
 
     if (nextIncompleteStep) {
       /** 
@@ -170,13 +173,13 @@ class Recipe extends EventEmitter {
         case 'PREPARE_FOR_MASH_RECIRC':
         case 'PREPARE_FOR_BOIL':
         case 'PREPARE_FOR_WORT_CHILL':
-          logger.trace(`Starting new NoAction step: ${nextIncompleteStep.title}`)
+          logger.trace(`CREATING NoAction STEP: ${nextIncompleteStep.title}`)
           newStep = new NoAction(nextIncompleteStep, this.value.id, this.io); break
         case 'HEATING':
-          logger.trace(`Starting new Heat step: ${nextIncompleteStep.title}`)
+          logger.trace(`CREATING Heat STEP: ${nextIncompleteStep.title}`)
           newStep = new Heat(nextIncompleteStep, this.value.id, this.io, this.PID); break
         case 'CHILLING':
-          logger.trace(`Starting new Chill step: ${newStep.title}`)
+          logger.trace(`CREATING Chill STEP: ${newStep.title}`)
           newStep = new Chill(nextIncompleteStep, this.value.id, this.io); break
         case 'RESTING':
           // rest
@@ -195,6 +198,11 @@ class Recipe extends EventEmitter {
       // In the stop function, there may be asynchronous timeouts as devices 'unload' hence the wait
       await this.currentStep.stop()
 
+      // If the next step is a prepare for step, then pump down. else, do not pump down
+      if (this.currentStep.type === 'HEATING' && newStep.type.includes('PREPARE')) {
+        this.currentStep.pumpDown()
+      }
+
       // reset the current step
       this.currentStep = newStep
       this.currentStep.stepTime = stepTime || 0
@@ -203,7 +211,7 @@ class Recipe extends EventEmitter {
       // wait for startup procedures before continuing
       this.currentStep.start()
 
-      // The current step notifies the recipe that it has completed itself
+      // The current step notifies the main server that the step is completed and it needs to relay that info to the frontend
       this.currentStep.on('end', () => {
         logger.trace('Received end event from current step. Moving to next step.')
         this.nextStep()
@@ -253,6 +261,8 @@ class Step extends EventEmitter {
   #id = ''
   /** Details about the current step. */
   #step = {}
+  /** The specific step type. */
+  #type = ''
   /** IO for the step. */
   #io = null
   /** Time object to track how long the current step takes. */
@@ -316,6 +326,9 @@ class Step extends EventEmitter {
   set id(id) { this.#id = id }
   get id() { return this.#id }
 
+  set type(type) { this.#type = type }
+  get type() { return this.#type }
+
   set PID(PID) { this.#PID = PID }
   get PID() { return this.#PID }
   
@@ -336,7 +349,7 @@ class Step extends EventEmitter {
     this.emit('end')
   }
   async start() {
-    logger.trace(`STARTING STEP: ${this.#id}`)
+    logger.trace(`STARTING STEP: ${this.step.title}, ${this.#id}`)
     this.#timer.start()
   }
   async stop() {
@@ -452,6 +465,9 @@ class Heat extends Step {
 
   async checkComplete() {
     // If reached setpoint, set the flag to true and wait an additional 1 minutes to finish step
+    // This is so the PID loop has approximately 1 minute to temper the bulk load. If it ended as
+    // soon as setpoint was reached, the resevoir the pump is pulling from would be at some temperature
+    // less than the setpoint. This will help bring that resevoir to a more uniform temp closer to setpoint.
     if (this.#stepTemp >= this.setpoint && !this.#stopDelay) {
       this.#stopDelay = true
       logger.trace('Ending step initiated. Will end Heating step in 1 minute.')
@@ -479,6 +495,7 @@ class Heat extends Step {
 
   /** Stop the Heat step.
    *  1. Stop the PID heating loop.
+   *  IF NEED TO PUMP DOWN
    *  2. Turn the heater off.
    *  3. Turn the contactor off to mechanically prevent heating.
   */
@@ -486,13 +503,19 @@ class Heat extends Step {
     return new Promise((resolve) => {
       this.parent.stop.call(this)
       this.PID.stopLoop()
-      this.io.Heat1.autoOff()
-      this.io.Contactor1.autoOff()
-      setTimeoutGlobal(() => {
-        this.io.Pump1.autoOff()
-        resolve()
-      }, 4000)
+      resolve()
     })
+  }
+
+  /** Sequence equipment off if this function is called. */
+  async pumpDown() {
+    logger.trace(`Pumping down ${this.step.title}`)
+    this.io.Heat1.autoOff()
+    this.io.Contactor1.autoOff()
+    setTimeoutGlobal(() => {
+      this.io.Pump1.autoOff()
+      resolve()
+    }, 4000)
   }
 }
 Heat.prototype.parent = Step.prototype

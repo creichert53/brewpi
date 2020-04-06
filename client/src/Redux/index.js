@@ -69,6 +69,7 @@ socket.on('store initial state', data => {
   })
 })
 socket.on('update recipe from server', recipe => {
+  console.log(recipe)
   store.dispatch({
     type: types.UPDATE_RECIPE,
     payload: recipe
