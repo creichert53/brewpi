@@ -71,18 +71,23 @@ class Recipe extends EventEmitter {
   #currentStep = new Step({ id: 'default' })
   /** Update temperature in the Redis table */
   #updateTemps = new cron({
-    cronTime: '*/2 * * * * *',
+    cronTime: '*/1 * * * * *',
     onTick: async () => {
-      const temps = await this.#io.readTemps()
-      temps.id = uuid() // create a unique identifier
-      temps.stepId = this.#currentStep.id // for tracking purposes keep the step id with the temp datapoint
-      temps.recipeId = this.#recipeId // for tracking purposes keep the recipe id with the temp datapoint
-      temps.unix = moment().tz('America/New_York').unix() // add unix timestamp
-      temps.timestamp = moment().tz('America/New_York').format() // add a utc timestamp with time zone
-      await this.#redis.rpushAsync(['temp_array', JSON.stringify(temps)]) // append the temps object
-      const llen = await this.#redis.llenAsync('temp_array') // array length
-      if (llen > 21600) // 12 hrs in seconds at 2 second intervals
-        await this.#redis.ltrimAsync('temp_array', 1, llen)
+      try {
+        const temps = await this.#io.readTemps()
+        temps.id = uuid() // create a unique identifier
+        temps.stepId = this.#currentStep.id // for tracking purposes keep the step id with the temp datapoint
+        temps.recipeId = this.#recipeId // for tracking purposes keep the recipe id with the temp datapoint
+        temps.unix = moment().tz('America/New_York').unix() // add unix timestamp
+        temps.timestamp = moment().tz('America/New_York').format() // add a utc timestamp with time zone
+        await this.#redis.rpushAsync(['temp_array', JSON.stringify(temps)]) // append the temps object
+        const llen = await this.#redis.llenAsync('temp_array') // array length
+        if (llen > 43200) // 12 hrs in seconds at 1 second intervals
+          await this.#redis.ltrimAsync('temp_array', 1, llen)
+      } catch (error) {
+        if (!error.message.includes('The connection is already closed.'))
+          logger.error(error)
+      }
     },
     start: false,
     timeZone: 'America/New_York'

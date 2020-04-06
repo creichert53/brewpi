@@ -19,7 +19,7 @@ const {
   updateStore,
   removeIncompleteTemps
 } = require('./database/functions')
-const { debounce, cloneDeep, get, set, update } = require('lodash')
+const { debounce, cloneDeep, meanBy, set } = require('lodash')
 const interval = require('accurate-interval')
 const traverse = require('traverse')
 const Recipe = require('./service/Recipe')
@@ -56,6 +56,14 @@ Promise.promisifyAll(redis.RedisClient.prototype)
 var client = redis.createClient()
 
 const formatTempArray = async (tempArray) => {
+  const sma = array => {
+    let cloned = cloneDeep(array)
+    for (var i = 6; i < cloned.length; i++) {
+      cloned[i].y = meanBy(cloned.slice(i - 6, i + 1), 'y')
+    }
+    return cloned
+  }
+
   const { settings: { temperatures: t }} = JSON.parse(await client.getAsync('store'))
   const formattedArray = tempArray.reduce((acc,temp) => {
     const { timestamp, temp1, temp2, temp3 } = JSON.parse(temp)
@@ -77,6 +85,10 @@ const formatTempArray = async (tempArray) => {
       data: []
     }
   })
+  formattedArray.temp1.data = sma(formattedArray.temp1.data)
+  formattedArray.temp2.data = sma(formattedArray.temp2.data)
+  formattedArray.temp3.data = sma(formattedArray.temp3.data)
+
   return Object.values(formattedArray)
 }
 
@@ -87,16 +99,25 @@ var tempLogger = new cron({
 
     // Set the temps in the temporary store
     const temps = await recipe.io.readTemps()
-    await client.setAsync('temps', JSON.stringify(temps))
 
-    // emit the temps and times to the frontent
-    io.emit('new temperature', temps)
+    try {
+      await client.setAsync('temps', JSON.stringify(temps))
+  
+      // emit the temps and times to the frontent
+      io.emit('new temperature', temps)
 
-    // Nivo Chart
-    var tempArray = await formatTempArray(await client.lrangeAsync('temp_array', -900, -1) || [])
-
-    // Send the chart data to the frontend
-    io.emit('temp array', tempArray)
+      // get the chart window from settings so we can determine how many temps to read
+      const { settings: { temperatures: { chartWindow }}} = JSON.parse(await client.getAsync('store'))
+  
+      // Nivo Chart
+      var tempArray = await formatTempArray(await client.lrangeAsync('temp_array', -(chartWindow * 60), -1) || [])
+  
+      // Send the chart data to the frontend
+      io.emit('temp array', tempArray)
+    } catch (error) {
+      if (!error.message.includes('The connection is already closed.'))
+        logger.error(error)
+    }
   },
   start: true,
   runOnInit: true,
@@ -232,7 +253,7 @@ const init = async () => {
       }
       
       /** CHART WINDOW SETTINGS */
-      if (type === types.SETTINGS) {
+      if (type === types.CHART_WINDOW) {
         logger.success('Chart Window Updated')
         set(store, 'settings.temperatures.chartWindow', payload)
         updateStoreOnChange(store)
@@ -258,15 +279,6 @@ const init = async () => {
         const nextStep = await recipe.nextStep()
         logger.success(`Completing STEP ${id} -> ${nextStep.id}`)
         io.emit('update recipe from server', recipe.value) // value is updated in the nextStep function
-      }
-
-      /** COMPLETE TODO */
-      if (type === types.COMPLETE_TODO) {
-        const { id } = action
-        logger.success(`Completing TODO ${id}`)
-        const newRecipe = completeNodeInRecipe(payload, id)
-        await updateStoreOnChange({ ...cloneDeep(store), recipe: newRecipe })
-        io.emit('update recipe from server', newRecipe)
       }
 
       /** COMPLETE TODO */
