@@ -117,7 +117,7 @@ socket.on('set snackbar message', args => {
     message: message,
     options: {
       key: new Date().getTime() + Math.random(),
-      variant: 'info',
+      variant: variant,
       persist: true
     }
   }))

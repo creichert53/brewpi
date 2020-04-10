@@ -21,6 +21,8 @@ Promise.promisifyAll(redis.RedisClient.prototype)
 // FIXME There is a memory leak when creating steps with PID. It appears to be duplicating the PID object every single time.
 // This might also be the reason when timing isn't working the way I would expect.
 // FIXME Step immediately after a step that counts down, will also count down one and then begin to count up for that step.
+//          - It seems like there is something going on when a step changes that it's still holding over the step times from the previous step.
+//          - I have now seen some steps that are supposed to count down, count up the amount of time from the previous step and then begin counting down.
 
 /**
  *  * THE MAIN RECIPE CLASS
@@ -203,14 +205,17 @@ class Recipe extends EventEmitter {
     onTick: async () => {
       this.#totalTime.increment()
 
-      updateTimeInDatabase({
+      await updateTimeInDatabase({
         totalTime: this.#totalTime,
         stepTime: this.currentStep.stepTime,
         remainingTime: this.currentStep.remainingTime
       })
 
+      // If moving to the next step, make sure the time is stopped until the step is switched
       if (await this.currentStep.checkComplete()) {
-        this.nextStep()
+        this.#timer.stop()
+        await this.nextStep()
+        this.#timer.start()
       }
 
       // Tell the recipe to notify the frontend.
