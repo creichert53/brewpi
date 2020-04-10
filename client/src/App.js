@@ -1,6 +1,6 @@
 /** REACT - REDUX **/
 import React, { Component } from 'react'
-import { Provider } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import classnames from 'classnames'
 
 /** ROUTER **/
@@ -14,11 +14,17 @@ import {
   MuiThemeProvider,
   withStyles
 } from '@material-ui/core/styles'
+import Button from '@material-ui/core/Button'
+import Snackbar from '@material-ui/core/Snackbar'
+import Alert from '@material-ui/lab/Alert';
+
+/** SNACKBARS */
+import { SnackbarProvider } from 'notistack'
 
 /** CUSTOM **/
 import { muiTheme } from './assets/muiTheme'
 import Main from './Main'
-import store from './Redux'
+import { closeSnackbar } from './Redux/actions'
 
 const styles = theme => ({
   content: {
@@ -39,35 +45,54 @@ const styles = theme => ({
 
     minHeight: '100%'
   },
+  snackbar: {
+    color: 'white'
+  }
 })
 
-class App extends Component {
-  render() {
-    const { classes } = this.props
-    return (
-      <Provider store={store}>
-        <Router>
-          <MuiThemeProvider theme={muiTheme}>
-            <div>
-              <Helmet>
-                <meta charset='utf-8' />
-                <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no' />
-                <script
-                  defer
-                  src='https://use.fontawesome.com/releases/v5.0.9/js/all.js'
-                  integrity='sha384-8iPTk2s/jMVj81dnzb/iFR2sdA7u06vHJyyLlAd4snFpCl/SnyUjRrbdJsw1pGIl'
-                  crossorigin='anonymous'></script>
-                <title>My Brew Pi</title>
-              </Helmet>
-              <div className={classnames(classes.content)}>
-                <Main />
-              </div>
+export const App = props => {
+  const { classes } = props
+  const dispatch = useDispatch()
+  return (
+    <Router>
+      <MuiThemeProvider theme={muiTheme}>
+        <SnackbarProvider
+          hideIconVariant={false}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          classes={{
+            variantInfo: classes.snackbar,
+            variantError: classes.snackbar,
+            variantSuccess: classes.snackbar,
+            variantWarning: classes.snackbar,
+          }}
+          action={key => (
+            <Button onClick={() => dispatch(closeSnackbar(key))}>
+              Dismiss
+            </Button>
+          )}
+        >
+          <div>
+            <Helmet>
+              <meta charset='utf-8' />
+              <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no' />
+              <script
+                defer
+                src='https://use.fontawesome.com/releases/v5.0.9/js/all.js'
+                integrity='sha384-8iPTk2s/jMVj81dnzb/iFR2sdA7u06vHJyyLlAd4snFpCl/SnyUjRrbdJsw1pGIl'
+                crossorigin='anonymous'></script>
+              <title>My Brew Pi</title>
+            </Helmet>
+            <div className={classnames(classes.content)}>
+              <Main />
             </div>
-          </MuiThemeProvider>
-        </Router>
-      </Provider>
-    )
-  }
+          </div>
+        </SnackbarProvider>
+      </MuiThemeProvider>
+    </Router>
+  )
 }
 
 export default withStyles(styles, { withTheme: true })(App)

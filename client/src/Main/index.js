@@ -1,7 +1,7 @@
 /** REACT-REDUX **/
-import React from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 
 /** REACT-ROUTER **/
 import { Route, withRouter } from 'react-router-dom'
@@ -36,7 +36,8 @@ import Home from '../Home'
 import Settings from '../Settings'
 import ControlCenter from '../ControlCenter'
 import IOList from './IOList'
-import { formatRecipe, newRecipe } from '../Redux/actions'
+import Notifier from './Notifier'
+import { formatRecipe, newRecipe as newRecipeAction } from '../Redux/actions'
 
 const styles = theme => ({
   root: {
@@ -98,10 +99,6 @@ const styles = theme => ({
     backgroundColor: 'white',
     opacity: 0.7,
   },
-  menuButton: {
-    marginLeft: -12,
-    marginRight: 20,
-  },
   input: {
     display: 'none',
   },
@@ -151,31 +148,32 @@ const DrawerListWithRoutes = props => (
   </ListItem>
 )
 
-class ResponsiveDrawer extends React.Component {
-  state = {
-    mobileOpen: false,
-    anchorEl: null,
+export const ResponsiveDrawer = props => {
+  const {
+    classes,
+    theme,
+    history,
+    location,
+    time: { totalTime, stepTime, remainingTime },
+    newRecipe
+  } = props
+
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [anchorEl, setAnchorEl] = useState(null)
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen)
   }
 
-  handleDrawerToggle = () => {
-    this.setState({ mobileOpen: !this.state.mobileOpen })
+  const handleMenu = event => {
+    setAnchorEl(event.currentTarget)
+  }
+  const handleClose = event => {
+    setAnchorEl(null)
   }
 
-  handleChange = (event, checked) => {
-    this.setState({ auth: checked });
-  }
-
-  handleMenu = event => {
-    this.setState({ anchorEl: event.currentTarget });
-  }
-
-  handleClose = () => {
-    this.setState({ anchorEl: null });
-  }
-
-  handleFile = (selectorFiles: FileList) => {
+  const handleFile = (selectorFiles) => {
     const file = selectorFiles[0]
-    const that = this
     if (file) {
       var reader = new FileReader();
       reader.readAsText(file, 'UTF-8');
@@ -190,7 +188,7 @@ class ResponsiveDrawer extends React.Component {
           valueProcessors: [ xml2js.processors.parseNumbers, xml2js.processors.parseBooleans ],
         }, function (err, result) {
           const r = formatRecipe(result.recipes.recipe)
-          that.props.newRecipe(r)
+          newRecipe(r)
         })
       }
       reader.onerror = function (evt) {
@@ -199,139 +197,134 @@ class ResponsiveDrawer extends React.Component {
     }
   }
 
-  render() {
-    const { classes, theme, history, location, time: { totalTime, stepTime, remainingTime }} = this.props
-    const { anchorEl } = this.state
-    const open = Boolean(anchorEl)
-
-    const drawer = (
-      <div className={classnames(classes.drawerContent, classes.drawerContent1)}>
-        <div className={classnames(classes.drawerContent, classes.drawerContent2)} />
-        <div className={classes.drawerContent}>
-          <div style={{padding:'10px',textAlign:'center',paddingBottom:'50px'}}>
-            <div style={theme.typography.titleFont}>Reichert Home Brewery</div>
-          </div>
-          <Divider />
-          <List className={classes.list}>
-            {routes.map((route, i) =>
-              <DrawerListWithRoutes
-                {...route}
-                {...history}
-                key={i}
-                style={location.pathname === route.path ? { color: theme.colors.palette[0] } : { color: 'rgb(100, 100, 100)' }}
-              />)}
-          </List>
-          <Divider />
-          <IOList />
+  const drawer = (
+    <div className={classnames(classes.drawerContent, classes.drawerContent1)}>
+      <div className={classnames(classes.drawerContent, classes.drawerContent2)} />
+      <div className={classes.drawerContent}>
+        <div style={{padding:'10px',textAlign:'center',paddingBottom:'50px'}}>
+          <div style={theme.typography.titleFont}>Reichert Home Brewery</div>
         </div>
+        <Divider />
+        <List className={classes.list}>
+          {routes.map((route, i) =>
+            <DrawerListWithRoutes
+              {...route}
+              {...history}
+              key={i}
+              style={location.pathname === route.path ? { color: theme.colors.palette[0] } : { color: 'rgb(100, 100, 100)' }}
+            />)}
+        </List>
+        <Divider />
+        <IOList />
       </div>
-    )
+    </div>
+  )
 
-    return (
-      <div className={classes.root}>
-        <AppBar className={classes.appBar} position='static'>
-          <Toolbar>
-            <IconButton
-              color='inherit'
-              aria-label='open drawer'
-              onClick={this.handleDrawerToggle}
-              className={classes.navIconHide}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant='h6' color='inherit' noWrap style={{ flex:1 }}>
-              {routes.filter(x => x.path === location.pathname).map((route, i) => route.text)}
-            </Typography>
-            <CardHeader
-              title={totalTime}
-              subheader={remainingTime !== '00:00:00' ? remainingTime : stepTime}
-              style={{ textAlign: 'right', paddingTop: 0, paddingBottom: 0 }}
+  return (
+    <div className={classes.root}>
+      <Notifier />
+      <AppBar className={classes.appBar} position='static'>
+        <Toolbar>
+          <IconButton
+            color='inherit'
+            aria-label='open drawer'
+            onClick={handleDrawerToggle}
+            className={classes.navIconHide}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant='h6' color='inherit' noWrap style={{ flex:1 }}>
+            {routes.filter(x => x.path === location.pathname).map((route, i) => route.text)}
+          </Typography>
+          <CardHeader
+            title={totalTime}
+            subheader={remainingTime !== '00:00:00' ? remainingTime : stepTime}
+            style={{ textAlign: 'right', paddingTop: 0, paddingBottom: 0 }}
+          />
+          <div>
+
+            {/* XML Input */}
+            <input
+              accept='text/xml'
+              className={classes.input}
+              id='upload-beer-xml'
+              type='file'
+              onChange={ (e) => handleFile(e.target.files) }
             />
-            <div>
-
-              {/* XML Input */}
-              <input
-                accept='text/xml'
-                className={classes.input}
-                id='upload-beer-xml'
-                type='file'
-                onChange={ (e) => this.handleFile(e.target.files) }
-              />
-              {/* Upload recipe */}
-              <label htmlFor='upload-beer-xml'>
-                <IconButton color='inherit' component='span'>
-                  <CloudUpload />
-                </IconButton>
-              </label>
-
-              {/* Profile */}
-              <IconButton
-                aria-owns={open ? 'menu-appbar' : null}
-                aria-haspopup='true'
-                onClick={this.handleMenu}
-                color='inherit'
-              >
-                <AccountCircle />
+            {/* Upload recipe */}
+            <label htmlFor='upload-beer-xml'>
+              <IconButton color='inherit' component='span'>
+                <CloudUpload />
               </IconButton>
+            </label>
 
-              {/* Profile Menu */}
-              <Menu
-                id='menu-appbar'
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={open}
-                onClose={this.handleClose}
-              >
-                <MenuItem onClick={this.handleClose}>Profile</MenuItem>
-                <MenuItem onClick={this.handleClose}>My account</MenuItem>
-              </Menu>
+            {/* Profile */}
+            <IconButton
+              aria-owns={Boolean(anchorEl) ? 'menu-appbar' : null}
+              aria-haspopup='true'
+              onClick={handleMenu}
+              color='inherit'
+            >
+              <AccountCircle />
+            </IconButton>
 
-            </div>
-          </Toolbar>
-        </AppBar>
-        <nav className={classes.drawer}>
-          <Hidden mdUp implementation="css">
-            <Drawer
-              variant='temporary'
-              anchor={theme.direction === 'rtl' ? 'right' : 'left'}
-              open={this.state.mobileOpen}
-              onClose={this.handleDrawerToggle}
-              classes={{
-                paper: classes.drawerPaper,
+            {/* Profile Menu */}
+            <Menu
+              id='menu-appbar'
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
               }}
-              ModalProps={{
-                keepMounted: true, // Better open performance on mobile.
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
               }}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
             >
-              {drawer}
-            </Drawer>
-          </Hidden>
-          <Hidden smDown implementation="css">
-            <Drawer
-              variant='permanent'
-              open
-              classes={{
-                paper: classes.drawerPaper,
-              }}
-            >
-              {drawer}
-            </Drawer>
-          </Hidden>
-        </nav>
-        <main className={classes.content}>
-          <div className={classes.toolbar} />
-          {routes.filter(x => x.path === location.pathname).map((route, i) => <RouteWithSubRoutes key={i} {...route} />)}
-        </main>
-      </div>
-    )
-  }
+              <MenuItem onClick={handleClose}>Profile</MenuItem>
+              <MenuItem onClick={handleClose}>My account</MenuItem>
+            </Menu>
+
+          </div>
+        </Toolbar>
+      </AppBar>
+      <nav className={classes.drawer}>
+        <Hidden mdUp implementation="css">
+          <Drawer
+            variant='temporary'
+            anchor={theme.direction === 'rtl' ? 'right' : 'left'}
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+            classes={{
+              paper: classes.drawerPaper,
+            }}
+            ModalProps={{
+              keepMounted: true, // Better open performance on mobile.
+            }}
+          >
+            {drawer}
+          </Drawer>
+        </Hidden>
+        <Hidden smDown implementation="css">
+          <Drawer
+            variant='permanent'
+            open
+            classes={{
+              paper: classes.drawerPaper,
+            }}
+          >
+            {drawer}
+          </Drawer>
+        </Hidden>
+      </nav>
+      <main className={classes.content}>
+        <div className={classes.toolbar} />
+        {routes.filter(x => x.path === location.pathname).map((route, i) => <RouteWithSubRoutes key={i} {...route} />)}
+      </main>
+    </div>
+  )
 }
 
 ResponsiveDrawer.propTypes = {
@@ -344,5 +337,5 @@ const mapStateToProps = (state) => ({
 })
 
 export default withStyles(styles, { withTheme: true })(withRouter(connect(mapStateToProps, {
-  newRecipe
+  newRecipe: newRecipeAction
 })(ResponsiveDrawer)))

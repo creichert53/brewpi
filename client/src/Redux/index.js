@@ -13,6 +13,12 @@ import settingsReducer from './reducers/settingsReducer'
 import temperatureReducer from './reducers/temperatureReducer'
 import temperatureArrayReducer from './reducers/temperatureArrayReducer'
 import timeReducer from './reducers/timeReducer'
+import snackbarReducer from './reducers/snackbarReducer'
+
+// SNACKBAR
+import {
+  enqueueSnackbar
+} from './actions'
 
 // CREATE SOCKET-IO MIDDLEWARE
 const urlObj = url.parse(window.location.href)
@@ -30,7 +36,8 @@ const reducers = combineReducers({
   settings: settingsReducer,
   temperatures: temperatureReducer,
   temperatureArray: temperatureArrayReducer,
-  time: timeReducer
+  time: timeReducer,
+  snackbar: snackbarReducer
 })
 const rootReducer = (state, action) => {
   if (action.type === SET_STORE_FROM_SERVER) {
@@ -69,7 +76,6 @@ socket.on('store initial state', data => {
   })
 })
 socket.on('update recipe from server', recipe => {
-  console.log(recipe)
   store.dispatch({
     type: types.UPDATE_RECIPE,
     payload: recipe
@@ -104,6 +110,17 @@ socket.on('output update', value => {
     type: types.UPDATE_LIVE_OUTPUT,
     payload: value
   })
+})
+socket.on('set snackbar message', args => {
+  const { message, variant = 'info' } = args
+  store.dispatch(enqueueSnackbar({
+    message: message,
+    options: {
+      key: new Date().getTime() + Math.random(),
+      variant: 'info',
+      persist: true
+    }
+  }))
 })
 
 export default store

@@ -115,7 +115,7 @@ var tempLogger = new cron({
       // Send the chart data to the frontend
       io.emit('temp array', tempArray)
     } catch (error) {
-      if (!error.message.includes('The connection is already closed.'))
+      if (!error.message.includes('The connection is already closed.') && !error.message.includes('temperatures'))
         logger.error(error)
     }
   },
@@ -142,33 +142,38 @@ const init = async () => {
   })
   logger.info('Databases are open. Continue spinning up server.')
 
+  /**
+   * Listen to Emitter events from the Recipe class and take action.
+   * 
+   * @param {Recipe} recipe The Recipe class object
+   */
   const recipeListen = async (recipe) => {
+    // A GPIO update was initialted so update the frontend.
     recipe.on('output update', update => {
       io.emit('output update', update)
     })
-    recipe.on('time', async ({ totalTime, stepTime, remainingTime }) => {
-      // Set the times in the temporary store
-      await client.setAsync('time', JSON.stringify({
-        totalTime: totalTime.value(),
-        stepTime: stepTime.value(),
-        remainingTime: remainingTime.value()
-      }, null, 2))
-      const store = Object.assign({}, JSON.parse(await client.getAsync('store')), {
-        time: {
-          totalTime: totalTime.toString(),
-          stepTime: stepTime.toString(),
-          remainingTime: remainingTime.toString()
-        }
-      })
-      await updateStoreOnChange(store)
-      io.emit('time', store.time)
+
+    // The time has changed in the recipe. We need to keep track of total recipe time,
+    // the duration of a step, and and time that is remaining in a step and send it to the frontend.
+    recipe.on('time', time => {
+      io.emit('time', time)
     })
+
+    // Send an updated recipe value to the frontend so it is in sync with the server.
     recipe.on('update recipe from server', _ => {
       logger.trace('Updating the frontend that program is moving to the next step.')
       io.emit('update recipe from server', recipe.value)
     })
+
+    // Send the snackbar message to the frontend so it can be shown to the user.
+    recipe.on('set snackbar message', args => {
+      logger.trace('Updating the frontend snackbar message.')
+      io.emit('set snackbar message', args)
+    })
+
+    // Notify the frontend that the recipe has completed so it ca let the user know.
     recipe.on('end', async () => {
-      console.log('recipe completed')
+      logger.success('RECIPE COMPLETED')
     })
   }
   
@@ -201,9 +206,6 @@ const init = async () => {
     // Send the temps to the frontend on each new connection
     socket.emit('new temperature', JSON.parse(await client.getAsync('temps') || { temp1: 0, temp2: 0, temp3: 0 }))
 
-    // FIXME Delete this section after testing. Just want to test sending temps to frontend
-    socket.emit('temp array', await formatNivoTempArray(await client.lrangeAsync('temp_array', -900, -1) || []))
-
     // Send the initial states of all outputs
     recipe.io.outputsSync().forEach(out => io.emit('output update', out))
 
@@ -219,12 +221,12 @@ const init = async () => {
       if (type === types.NEW_RECIPE) {
         logger.success('New Recipe Imported')
 
+        // end the previous recipe before continuing. need to quit all timers.
+        await recipe.end()
+
         // update the store
         store.recipe = payload
-        updateStoreOnChange(store)
-
-        // end the previous recipe
-        await recipe.end()
+        await updateStoreOnChange(store)
 
         // start a new recipe with new times
         recipe = new Recipe(payload)
@@ -235,8 +237,9 @@ const init = async () => {
         // Send the initial states of all outputs
         recipe.io.outputsSync().forEach(out => io.emit('output update', out))
 
-        // Reset times last
-        recipe.resetTimes()
+        // Send default time to frontend
+        let t = '00:00:00'
+        io.emit('time', { totalTime: t, stepTime: t, remainingTime: t })
       }
 
       /** START BREW */
