@@ -35,7 +35,7 @@ import TimerIcon from '@material-ui/icons/Timer'
 import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
 
-import { findIndex, isEqual, first } from 'lodash'
+import { findIndex, isEqual, first, get } from 'lodash'
 
 import gradient from 'gradient-color'
 import numeral from 'numeral'
@@ -214,7 +214,7 @@ class Home extends React.Component {
               })}
             </Grid>
           </Grid>
-          {!isEqual(tempArray, []) && <Grid item>
+          {!isEqual(get(tempArray, '[0].data', []), []) && <Grid item>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Card className={classes.card}>
@@ -255,7 +255,7 @@ class Home extends React.Component {
                       <MenuItem onClick={() => this.handleChartWindowSelectClose(30)}>30 minutes</MenuItem>
                     </MenuList>
                   </Popover>
-                  <TempChart />
+                  {<TempChart />}
                 </Card>
               </Grid>
             </Grid>

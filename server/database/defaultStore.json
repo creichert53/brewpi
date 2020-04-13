@@ -1,0 +1,113 @@
+{
+  "elements": {
+    "boil": 0,
+    "rims": 0
+  },
+  "id": "store",
+  "io": [
+    {
+      "displayName": "Pump 1",
+      "index": 0,
+      "liveValue": 1,
+      "name": "Pump1",
+      "timestamp": "2020-01-01 00:00:00",
+      "value": 0
+    },
+    {
+      "displayName": "Pump 2",
+      "index": 1,
+      "liveValue": 0,
+      "name": "Pump2",
+      "timestamp": "2020-01-01 00:00:00",
+      "value": 0
+    },
+    {
+      "displayName": "RIMS Tube Element",
+      "index": 2,
+      "liveValue": 0,
+      "name": "Heat1",
+      "timestamp": "2020-01-01 00:00:00",
+      "value": 0
+    },
+    {
+      "displayName": "Boil Kettle Element",
+      "index": 3,
+      "liveValue": 0,
+      "name": "Heat2",
+      "timestamp": "2020-01-01 00:00:00",
+      "value": 0
+    },
+    {
+      "displayName": "Contactor 1",
+      "index": 4,
+      "liveValue": 0,
+      "name": "Contactor1",
+      "timestamp": "2020-01-01 00:00:00",
+      "value": 0
+    },
+    {
+      "displayName": "Contactor 2",
+      "index": 5,
+      "liveValue": 0,
+      "name": "Contactor2",
+      "timestamp": "2020-01-01 00:00:00",
+      "value": 0
+    }
+  ],
+  "recipe": {},
+  "settings": {
+    "boil": {
+      "setpoint": 60
+    },
+    "rims": {
+      "derivative": 100,
+      "integral": 100,
+      "maxOutput": 80,
+      "proportional": 50,
+      "setpointAdjust": 0
+    },
+    "temperatures": {
+      "boilTempInterval": 30,
+      "chartWindow": 10,
+      "logTemperatures": false,
+      "mashTempInterval": 1,
+      "thermistor1": {
+        "boilBaseline": 208,
+        "boilTemp": 212,
+        "expanded": false,
+        "iceTemp": 32,
+        "name": "Hot Liquor Tank",
+        "useSetpointAdjust": false
+      },
+      "thermistor2": {
+        "boilBaseline": 208,
+        "boilTemp": 212,
+        "expanded": false,
+        "iceTemp": 32,
+        "name": "RIMS Tube",
+        "useSetpointAdjust": false
+      },
+      "thermistor3": {
+        "boilBaseline": 208,
+        "boilTemp": 212,
+        "expanded": false,
+        "iceTemp": 32,
+        "name": "Mash Tun",
+        "useSetpointAdjust": false
+      }
+    }
+  },
+  "snackbar": {
+    "notifications": []
+  },
+  "temperatures": {
+    "temp1": 0,
+    "temp2": 0,
+    "temp3": 0
+  },
+  "time": {
+    "remainingTime": "00:00:00",
+    "stepTime": "00:00:00",
+    "totalTime": "00:00:00"
+  }
+}

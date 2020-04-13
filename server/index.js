@@ -1,5 +1,3 @@
-const r = require('rethinkdb')
-const fs = require('fs')
 const cron = require('cron').CronJob
 const cors = require('cors')
 const http = require('http')
@@ -13,20 +11,17 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const Promise = require('bluebird')
 const {
-  bootstrapDatabase,
-  listenTemperatures,
-  getStoreFromDatabase,
-  updateStore,
-  removeIncompleteTemps
+  bootstrapDatabase
 } = require('./database/functions')
-const { debounce, cloneDeep, meanBy, set } = require('lodash')
+const { debounce, cloneDeep, get, set } = require('lodash')
 const Recipe = require('./service/Recipe')
 const logger = require('./service/logger')
 const {
   completeNodeInRecipe,
-  updateStoreOnChange
+  setRedisStore,
+  formatNivoTempArray,
+  dbBackup
 } = require('./service/utility')
-const moment = require('moment')
 
 // adjust the global timeout functionality so all timeouts can be cleared from anywhere
 require('./service/timeout')
@@ -51,49 +46,10 @@ app.get('/', (req, res) => {
 Promise.promisifyAll(redis.RedisClient.prototype)
 
 // Initialize variables
-var client = redis.createClient()
+let client = redis.createClient()
 
-const formatNivoTempArray = async (tempArray) => {
-  // Moving average for a 3 second window
-  const sma = array => {
-    let cloned = cloneDeep(array)
-    for (var i = 3; i < cloned.length; i++) {
-      cloned[i].y = meanBy(cloned.slice(i - 3, i + 1), 'y')
-    }
-    return cloned.slice(6)
-  }
-
-  // Reformat the simple array of temperature informtion to something Nivo Charts can use.
-  const { settings: { temperatures: t }} = JSON.parse(await client.getAsync('store'))
-  const formattedArray = tempArray.reduce((acc,temp) => {
-    const { timestamp, temp1, temp2, temp3 } = JSON.parse(temp)
-    acc.temp1.data = acc.temp1.data.concat({ x: timestamp, y: temp1 })
-    acc.temp2.data = acc.temp2.data.concat({ x: timestamp, y: temp2 })
-    acc.temp3.data = acc.temp3.data.concat({ x: timestamp, y: temp3 })
-    return acc
-  }, {
-    temp1: {
-      id: t.thermistor1.name,
-      data: []
-    },
-    temp2: {
-      id: t.thermistor2.name,
-      data: []
-    },
-    temp3: {
-      id: t.thermistor3.name,
-      data: []
-    }
-  })
-  formattedArray.temp1.data = sma(formattedArray.temp1.data)
-  formattedArray.temp2.data = sma(formattedArray.temp2.data)
-  formattedArray.temp3.data = sma(formattedArray.temp3.data)
-
-  return Object.values(formattedArray)
-}
-
-var recipe = new Recipe()
-var tempLogger = new cron({
+let recipe = new Recipe()
+let tempLogger = new cron({
   cronTime: '*/1 * * * * *',
   onTick: async () => {
 
@@ -110,27 +66,42 @@ var tempLogger = new cron({
       const { settings: { temperatures: { chartWindow }}} = JSON.parse(await client.getAsync('store'))
   
       // Nivo Chart
-      var tempArray = await formatNivoTempArray(await client.lrangeAsync('temp_array', -(chartWindow * 60), -1) || [])
-  
-      // Send the chart data to the frontend
-      io.emit('temp array', tempArray)
+      if (await client.exists('temp_array')) {
+        var tempArray = await formatNivoTempArray(await client.lrangeAsync('temp_array', -(chartWindow * 60), -1) || [])
+
+        // Send the chart data to the frontend
+        io.emit('temp array', tempArray)
+      }
     } catch (error) {
       if (!error.message.includes('The connection is already closed.') && !error.message.includes('temperatures'))
         logger.error(error)
     }
   },
-  start: true,
-  runOnInit: true,
+  start: false, // wait to start until database is bootstrapped
+  timeZone: 'America/New_York'
+})
+
+/** Periodically back up in-memory store to disk. */
+let backup = async () => {
+  try {
+    // Only backup the store if there is a running brew session
+    // TODO need to make sure the brew session flag is set to stop once the brew session ends
+    let store = JSON.parse(await client.getAsync('store'))
+    let startBrew = get(store, 'recipe.startBrew', false)
+    if (startBrew) await dbBackup()
+  } catch (error) {
+    if (!error.message.includes('The connection is already closed.') && !error.message.includes('temperatures'))
+      logger.error(error)
+  }
+}
+let dbBackupCron = new cron({
+  cronTime: '0 */5 * * * *',
+  onTick: () => backup(),
+  start: false, // wait to start until database is bootstrapped
   timeZone: 'America/New_York'
 })
 
 const init = async () => {
-  // first ensure that the database has been bootstrapped
-  await bootstrapDatabase()
-
-  // load up the uptime script that will log any reboots of the server
-  uptime()
-
   /**
  *  IMPORTANT: the database must be open for this server to work
  */
@@ -141,6 +112,14 @@ const init = async () => {
     timeout: 5000, // timeout in ms, default Infinity
   })
   logger.info('Databases are open. Continue spinning up server.')
+
+  // first ensure that the database has been bootstrapped
+  logger.success(await bootstrapDatabase())
+  tempLogger.start() // We've made sure all tables that will be saved to exist
+  dbBackupCron.start()
+
+  // load up the uptime script that will log any reboots of the server
+  uptime()
 
   /**
    * Listen to Emitter events from the Recipe class and take action.
@@ -172,14 +151,20 @@ const init = async () => {
     })
 
     // Notify the frontend that the recipe has completed so it ca let the user know.
-    recipe.on('end', async () => {
+    recipe.on('end recipe', async () => {
       logger.success('RECIPE COMPLETED')
+      io.emit('set snackbar message', {
+        message: 'Recipe has been completed!',
+        variant: 'success'
+      })
+
+      // TODO All logged temperatures for this recipe need the complete flag set to true so they aren't deleted and cleaned up.
+      // TODO Report for the brew
     })
   }
   
   // Get the store that is saved on disk and set it in memory
-  const { store } = await getStoreFromDatabase()
-  await client.set('store', JSON.stringify(store, null, 2))
+  const store = JSON.parse(await client.getAsync('store'))
 
   // Get the time values that are saved in memory (this step assumes it's not a cold start)
   const times = await client.getAsync('time')
@@ -199,8 +184,7 @@ const init = async () => {
     })
 
     // Send the intial state of the store to the frontend
-    var storeString = await client.getAsync('store')
-    var initialStore = JSON.parse(storeString)
+    var initialStore = JSON.parse(await client.getAsync('store'))
     socket.emit('store initial state', initialStore)
     
     // Send the temps to the frontend on each new connection
@@ -225,8 +209,7 @@ const init = async () => {
         await recipe.end()
 
         // update the store
-        store.recipe = payload
-        await updateStoreOnChange(store)
+        store = await setRedisStore({ recipe: payload })
 
         // start a new recipe with new times
         recipe = new Recipe(payload)
@@ -240,30 +223,37 @@ const init = async () => {
         // Send default time to frontend
         let t = '00:00:00'
         io.emit('time', { totalTime: t, stepTime: t, remainingTime: t })
+
+        await backup()
       }
 
       /** START BREW */
       if (type === types.START_BREW) {
         logger.success(`Starting '${store.recipe.name}'`)
-        await updateStoreOnChange({ ...cloneDeep(store), recipe: { ...cloneDeep(recipe.value), startBrew: true }})
+        store = await setRedisStore({ recipe: { ...cloneDeep(recipe.value), startBrew: true }})
         recipe.start()
+
+        await backup()
       }
       
       /** SETTINGS */
       if (type === types.SETTINGS) {
         logger.success('Settings Updated')
         const { proportional: kp, integral: ki, derivative: kd, maxOutput: max } = payload.rims
-        recipe.PID.setTuning(kp, ki, kd)
-        recipe.PID.setOutputLimits(recipe.PID.outMin, max)
-        store.settings = payload
-        updateStoreOnChange(store)
+        recipe.currentStep.PID.setTuning(kp, ki, kd)
+        recipe.currentStep.PID.setOutputLimits(recipe.currentStep.PID.outMin, max)
+        store = setRedisStore({ settings: payload })
+
+        await backup()
       }
       
       /** CHART WINDOW SETTINGS */
       if (type === types.CHART_WINDOW) {
         logger.success('Chart Window Updated')
         set(store, 'settings.temperatures.chartWindow', payload)
-        updateStoreOnChange(store)
+        store = setRedisStore({ settings: store.settings })
+
+        await backup()
       }
 
       /** UPDATE OUTPUT */
@@ -286,6 +276,8 @@ const init = async () => {
         const nextStep = await recipe.nextStep()
         logger.success(`Completing STEP ${id} -> ${nextStep.id}`)
         io.emit('update recipe from server', recipe.value) // value is updated in the nextStep function
+
+        await backup()
       }
 
       /** COMPLETE TODO */
@@ -293,8 +285,10 @@ const init = async () => {
         const { id } = action
         logger.success(`Completing TODO ${id}`)
         const newRecipe = completeNodeInRecipe(payload, id)
-        await updateStoreOnChange({ ...cloneDeep(store), recipe: newRecipe })
+        store = await setRedisStore({ recipe: newRecipe })
         io.emit('update recipe from server', newRecipe)
+
+        await backup()
       }
     })
   })
@@ -309,6 +303,7 @@ const server = httpServer.listen(port, () => {
 const kill = debounce(async () => {
   logger.info('Cleaning up long running tasks...')
   tempLogger.stop()
+  dbBackupCron.stop()
   io.close()
   await recipe.quit()
   await client.quitAsync()

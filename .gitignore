@@ -34,7 +34,6 @@ build/
 
 # Dependency directories
 node_modules/
-server/database/
 jspm_packages/
 
 # TypeScript v1 declaration files

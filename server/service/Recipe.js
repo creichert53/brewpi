@@ -8,21 +8,16 @@ const PID = require('./PID')
 const Promise = require('bluebird')
 const BreweryIO = require('./BreweryIO')
 const { get, cloneDeep, first } = require('lodash')
-const traverse = require('traverse')
+const accurateInterval = require('accurate-interval')
 const logger = require('./logger')
 const {
   completeNodeInRecipe,
-  updateStoreOnChange,
-  updateTimeInDatabase
+  setRedisStore,
+  setRedisTime,
+  getRedisStore
 } = require('./utility')
 
 Promise.promisifyAll(redis.RedisClient.prototype)
-
-// FIXME There is a memory leak when creating steps with PID. It appears to be duplicating the PID object every single time.
-// This might also be the reason when timing isn't working the way I would expect.
-// FIXME Step immediately after a step that counts down, will also count down one and then begin to count up for that step.
-//          - It seems like there is something going on when a step changes that it's still holding over the step times from the previous step.
-//          - I have now seen some steps that are supposed to count down, count up the amount of time from the previous step and then begin counting down.
 
 /**
  *  * THE MAIN RECIPE CLASS
@@ -47,17 +42,12 @@ class Recipe extends EventEmitter {
     // update the in memory store with the correct time and notify the connected frontend
     if (recipe) { // only do the following if a recipe is fed in
       const { totalTime = 0, stepTime = 0, remainingTime = 0 } = initialTimes || {}
-      updateTimeInDatabase({
+      setRedisTime({
         totalTime: new Time(totalTime),
         stepTime: new Time(stepTime),
         remainingTime: new Time(remainingTime)
       })
       this.totalTime = totalTime || 0
-
-      if (this.value.startBrew) {
-        this.#timer.start()
-        this.#updateTemps.start()
-      }
   
       if (this.value.startBrew) {
         logger.trace('STARTING BREW')
@@ -77,9 +67,7 @@ class Recipe extends EventEmitter {
      *  4. Get the next incomplete step from the recipe
      */
     this.value = completeNodeInRecipe(this.value, this.currentStep.id)
-    const store = JSON.parse(await this.#redis.getAsync('store'))
-    await updateStoreOnChange({ ...cloneDeep(store), recipe: this.value })
-    const { recipe: { steps }} = JSON.parse(await this.#redis.getAsync('store'))
+    const { recipe: { steps }} = await setRedisStore({ recipe: this.value })
     const nextIncompleteStep = first(steps.filter(step => !step.complete))
 
     // Keep the server up to date with all step changes
@@ -115,7 +103,7 @@ class Recipe extends EventEmitter {
           newStep = new RestAndConfirm(nextIncompleteStep, this.value.id, this.io); break
         case 'BOIL':
           // boil
-          newStep = new Step(nextIncompleteStep, this.value.id); break
+          newStep = new Boil(nextIncompleteStep, this.value.id, this.io); break
       }
 
       // wait for the current step to stop before resetting the current step to the newly formed step
@@ -140,6 +128,7 @@ class Recipe extends EventEmitter {
       this.currentStep.start()
 
       this.#timer.start() // start timer back up after store changed
+      this.#updateTemps.start() // make sure the temps are being logged as well
 
       // The current step notifies the main server that the step is completed and it needs to relay that info to the frontend
       this.currentStep.on('end', ({ duration }) => {
@@ -152,13 +141,13 @@ class Recipe extends EventEmitter {
           this.nextStep()
         }
       })
+
       // Send a snackbar message to the frontend
       this.currentStep.on('set snackbar message', args => {
         this.emit('set snackbar message', args)
       })
     } else {
       this.end()
-      this.emit('end') // Notify the server/frontend that everything is completed
     }
 
     return nextIncompleteStep
@@ -205,14 +194,14 @@ class Recipe extends EventEmitter {
     onTick: async () => {
       this.#totalTime.increment()
 
-      await updateTimeInDatabase({
+      await setRedisTime({
         totalTime: this.#totalTime,
         stepTime: this.currentStep.stepTime,
         remainingTime: this.currentStep.remainingTime
       })
 
       // If moving to the next step, make sure the time is stopped until the step is switched
-      if (await this.currentStep.checkComplete()) {
+      if (this.currentStep.checkComplete()) {
         this.#timer.stop()
         await this.nextStep()
         this.#timer.start()
@@ -257,7 +246,6 @@ class Recipe extends EventEmitter {
 
   /** This function brute force quits the recipe at any point. */
   async quit() {
-    // TODO Clean up database
     this.currentStep.stop()
     this.#updateTemps.stop()
     this.#timer.stop()
@@ -267,18 +255,24 @@ class Recipe extends EventEmitter {
 
   /** This function is intendended to cleanly end the recipe. It will save the recipe as a completed brew session into the database. */
   async end() {
-    // TODO Add database save for recipe
+    // TODO Add database save for recipe so a report can be generated at any time.
     this.currentStep.stop()
     this.#updateTemps.stop()
     this.#timer.stop()
     await this.#redis.quitAsync()
-    await this.io.unexportAll()
+    this.emit('end recipe') // Notify the server/frontend that everything is completed
   }
 }
 
-/**
- *  * STEP PARENT CLASS 
- */
+// ..######..########.########.########.
+// .##....##....##....##.......##.....##
+// .##..........##....##.......##.....##
+// ..######.....##....######...########.
+// .......##....##....##.......##.......
+// .##....##....##....##.......##.......
+// ..######.....##....########.##.......
+
+/** STEP PARENT CLASS */
 class Step extends EventEmitter {
   /** Track the id in the step object */
   #id = ''
@@ -367,9 +361,7 @@ class Step extends EventEmitter {
 
   checkComplete() {
     /** PLACEHOLDER - only do something if overridden */
-    return new Promise((resolve) => {
-      resolve(false)
-    })
+    return false
   }
 }
 
@@ -429,9 +421,6 @@ class Heat extends Step {
       this.#stepTemp = temp2
 
       // Get the settings from the redis store
-      const client = redis.createClient()
-      const store = await client.getAsync('store')
-      client.quit()
       const {
         settings: {
           rims: {
@@ -442,7 +431,7 @@ class Heat extends Step {
             setpointAdjust: adj
           }
         }
-      } = JSON.parse(store)
+      } = await getRedisStore()
 
       // Set the step setpoint on every iteration
       this.setpoint = step.setpoint + (adj || 0)
@@ -517,24 +506,17 @@ class Heat extends Step {
   }
 
   checkComplete() {
-    return new Promise((resolve) => {
-      // If reached setpoint, set the flag to true and wait an additional 1 minutes to finish step
-      // This is so the PID loop has approximately 1 minute to temper the bulk load. If it ended as
-      // soon as setpoint was reached, the resevoir the pump is pulling from would be at some temperature
-      // less than the setpoint. This will help bring that resevoir to a more uniform temp closer to setpoint.
-      // FIXME It looks like this can hang here if something happens during the timeout. Need a more robust way to end the step.
-      if (this.#stepTemp > this.setpoint && !this.#stopDelay) {
-        this.#stopDelay = true
-        logger.trace('Ending step initiated. Will end Heating step in 1 minute.')
-        this.emit('set snackbar message', {
-          message: 'Ending heating step in 1 minute.'
-        })
-        this.emit('end', { duration: 10000 })
-        resolve(false) // resolve with false so we can control the 'end' event
-      } else {
-        resolve(false)
-      }
-    })
+    // If reached setpoint, set the flag to true and wait an additional 1 minutes to finish step
+    // This is so the PID loop has approximately 1 minute to temper the bulk load. If it ended as
+    // soon as setpoint was reached, the resevoir the pump is pulling from would be at some temperature
+    // less than the setpoint. This will help bring that resevoir to a more uniform temp closer to setpoint.
+    if (this.#stepTemp > this.setpoint && !this.#stopDelay) {
+      this.#stopDelay = true
+      logger.trace('Ending step initiated. Will end Heating step in 1 minute.')
+      this.emit('set snackbar message', { message: 'Ending heating step in 1 minute.' })
+      this.emit('end', { duration: 10000 })
+    }
+    return false
   }
 }
 Heat.prototype.parent = Step.prototype
@@ -549,8 +531,8 @@ Heat.prototype.parent = Step.prototype
 
 /** REST STEP */
 class Rest extends Heat {
-  constructor(step, recipeId, breweryIO, PID) {
-    super(step, recipeId, breweryIO, PID)
+  constructor(step, recipeId, breweryIO) {
+    super(step, recipeId, breweryIO)
   }
 
   async start() {
@@ -561,15 +543,12 @@ class Rest extends Heat {
   }
 
   checkComplete() {
-    // TODO Saccharification Rest, f339ea53-a39e-4ad9-829f-db7308bfdb45 was called twice and counted down both times.
-    return new Promise((resolve) => {  
-      // Remaining time is updated every second
-      if (this.stepTime.value() > 0 && this.remainingTime.value() <= 0) {
-        resolve(true)
-      } else {
-        resolve(false)
-      }
-    })
+    // Remaining time is updated every second
+    if (this.stepTime.value() > 0 && this.remainingTime.value() <= 0) {
+      return true
+    } else {
+      return false
+    }
   }
 }
 Rest.prototype.parent = Heat.prototype
@@ -585,47 +564,118 @@ Rest.prototype.parent.parent = Step.prototype
 
 /** REST AND CONFIRM STEP */
 class RestAndConfirm extends Heat {
-  constructor(step, recipeId, breweryIO, PID) {
-    super(step, recipeId, breweryIO, PID)
+  constructor(step, recipeId, breweryIO) {
+    super(step, recipeId, breweryIO)
   }
 
   checkComplete() {
-    return new Promise((resolve) => {
-      // These steps are complete when todos are confirmed.
-      // This is just an override for the heat checkComplete method so it doesn't continually check for temp completion.
-      // We still want to control heating and pump outputs just like a normal heat step though. We will just let the
-      // recipe decide to complete the step when all todos are complete.
-      resolve(false)
-    })
+    // These steps are complete when todos are confirmed.
+    // This is just an override for the heat checkComplete method so it doesn't continually check for temp completion.
+    // We still want to control heating and pump outputs just like a normal heat step though. We will just let the
+    // recipe decide to complete the step when all todos are complete.
+    return false 
   }
 }
 Rest.prototype.parent = Heat.prototype
 Rest.prototype.parent.parent = Step.prototype
 
-// ..######..##.....##.####.##.......##.......####.##....##..######..
-// .##....##.##.....##..##..##.......##........##..###...##.##....##.
-// .##.......##.....##..##..##.......##........##..####..##.##.......
-// .##.......#########..##..##.......##........##..##.##.##.##...####
-// .##.......##.....##..##..##.......##........##..##..####.##....##.
-// .##....##.##.....##..##..##.......##........##..##...###.##....##.
-// ..######..##.....##.####.########.########.####.##....##..######..
+// .########...#######..####.##......
+// .##.....##.##.....##..##..##......
+// .##.....##.##.....##..##..##......
+// .########..##.....##..##..##......
+// .##.....##.##.....##..##..##......
+// .##.....##.##.....##..##..##......
+// .########...#######..####.########
+
+/** REST STEP */
+class Boil extends Step {
+  constructor(step, recipeId, breweryIO) {
+    super(step, recipeId, breweryIO)
+  }
+
+  #boilInterval = 1000
+  #start = false
+  #heater = accurateInterval(async () => {
+    if (this.#start) {
+      this.io.Contactor2.autoOn()
+      this.io.Heat2.autoOn()
+      const sp = get(await getRedisStore(), 'settings.boil.setpoint', 0) / 100
+      setTimeoutGlobal(() => {
+        this.io.Heat2.autoOff()
+      }, Math.max(0.0, sp * this.#boilInterval - 10))
+    } else {
+      this.io.Contactor2.autoOff()
+      this.io.Heat2.autoOff()
+    }
+  }, this.#boilInterval, { aligned: true, immediate: false })
+
+  async start() {
+    this.parent.parent.start.call(this)
+    this.#start = true
+  }
+
+  async stop() {
+    this.parent.parent.stop.call(this)
+    this.#heater.clear()
+  }
+
+  checkComplete() {
+    // Remaining time is updated every second
+    if (this.stepTime.value() > 0 && this.remainingTime.value() <= 0) {
+      return true
+    } else {
+      return false
+    }
+  }
+}
+Heat.prototype.parent = Step.prototype
+
+// ..######..##.....##.####.##.......##......
+// .##....##.##.....##..##..##.......##......
+// .##.......##.....##..##..##.......##......
+// .##.......#########..##..##.......##......
+// .##.......##.....##..##..##.......##......
+// .##....##.##.....##..##..##.......##......
+// ..######..##.....##.####.########.########
 
 /** CHILLING STEP */
 class Chill extends Step {
   constructor(step, recipeId, breweryIO) {
     super(step, recipeId, breweryIO)
+
+    this.#stepTemp = step.setpoint
   }
 
+  #stopDelay = false
+  #stepTemp = 999
+  #chiller = accurateInterval(async () => {
+    // Get the RIMS temperature
+    const { temp3 } = await this.io.readTemps()
+    this.#stepTemp = temp3
+  }, 1000, { aligned: true, immediate: true })
+
   /** Start the Chill step. During this step, the pump just continues to run. */
-  start() {
+  async start() {
     this.parent.start.call(this)
     this.io.Pump1.autoOn()
   }
 
   /** Stop the Heat step. Shut the pump off. */
-  stop() {
+  async stop() {
     this.parent.stop.call(this)
     this.io.Pump1.autoOff()
+    this.#chiller.clear()
+  }
+
+  checkComplete() {
+    if (this.#stepTemp < this.step.setpoint && !this.#stopDelay) {
+      this.#stopDelay = true
+      this.emit('set snackbar message', {
+        message: 'The wort has reached setpoint!',
+        variant: 'success'
+      })
+    }
+    return false
   }
 }
 Chill.prototype.parent = Step.prototype
