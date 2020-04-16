@@ -7,7 +7,7 @@ let displayed = [];
 
 const Notifier = () => {
   const dispatch = useDispatch();
-  const notifications = useSelector(store => store.snackbar.notifications || []);
+  const notifications = useSelector(store => store.snackbars || []);
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const storeDisplayed = (id) => {

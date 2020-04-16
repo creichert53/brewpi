@@ -1,42 +1,21 @@
-import { ENQUEUE_SNACKBAR, CLOSE_SNACKBAR, REMOVE_SNACKBAR } from '../actions';
+import {
+  ENQUEUE_SNACKBAR,
+  CLOSE_SNACKBAR,
+  REMOVE_SNACKBAR,
+  UPDATE_SNACKBARS
+} from '../types'
 
-const defaultState = {
-  notifications: [],
-};
-
-export default (state = defaultState, action) => {
+export default (state = [], action) => {
   switch (action.type) {
+    case UPDATE_SNACKBARS:
+      return action.payload // entire notification array from server
     case ENQUEUE_SNACKBAR:
-      return {
-        ...state,
-        notifications: [
-          ...state.notifications,
-          {
-            key: action.key,
-            ...action.notification,
-          },
-        ],
-      };
-
+      return action.payload
     case CLOSE_SNACKBAR:
-      return {
-        ...state,
-        notifications: state.notifications.map(notification => (
-          (action.dismissAll || notification.key === action.key)
-            ? { ...notification, dismissed: true }
-            : { ...notification }
-        )),
-      };
-
+      return action.payload
     case REMOVE_SNACKBAR:
-      return {
-        ...state,
-        notifications: state.notifications.filter(
-          notification => notification.key !== action.key,
-        ),
-      };
-
+      return action.payload
     default:
-      return state;
+      return state
   }
-};
+}

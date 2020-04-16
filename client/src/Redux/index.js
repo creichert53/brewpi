@@ -5,7 +5,7 @@ import io from 'socket.io-client'
 import url from 'url'
 
 // IMPORT REDUCERS
-import types from './types'
+import * as types from './types'
 import controlReducer from './reducers/controlReducer'
 import elementReducer from './reducers/elementReducer'
 import recipeReducer from './reducers/recipeReducer'
@@ -37,7 +37,7 @@ const reducers = combineReducers({
   temperatures: temperatureReducer,
   temperatureArray: temperatureArrayReducer,
   time: timeReducer,
-  snackbar: snackbarReducer
+  snackbars: snackbarReducer
 })
 const rootReducer = (state, action) => {
   if (action.type === SET_STORE_FROM_SERVER) {
@@ -121,6 +121,12 @@ socket.on('set snackbar message', args => {
       persist: true
     }
   }))
+})
+socket.on('set snackbars', value => {
+  store.dispatch({
+    type: types.UPDATE_SNACKBARS,
+    payload: value
+  })
 })
 
 export default store

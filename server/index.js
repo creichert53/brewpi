@@ -11,7 +11,9 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const Promise = require('bluebird')
 const {
-  bootstrapDatabase
+  bootstrapDatabase,
+  completeRecipeTemps,
+  removeIncompleteTemps
 } = require('./database/functions')
 const { debounce, cloneDeep, get, set } = require('lodash')
 const Recipe = require('./service/Recipe')
@@ -152,13 +154,17 @@ const init = async () => {
 
     // Notify the frontend that the recipe has completed so it ca let the user know.
     recipe.on('end recipe', async () => {
-      logger.success('RECIPE COMPLETED')
+      io.emit('set snackbar message', {
+        message: 'All steps have been completed. Saving data...',
+        variant: 'info'
+      })
+      await completeRecipeTemps(recipe.recipeId)
       io.emit('set snackbar message', {
         message: 'Recipe has been completed!',
         variant: 'success'
       })
+      logger.success('RECIPE COMPLETED')
 
-      // TODO All logged temperatures for this recipe need the complete flag set to true so they aren't deleted and cleaned up.
       // TODO Report for the brew
     })
   }
@@ -206,7 +212,7 @@ const init = async () => {
         logger.success('New Recipe Imported')
 
         // end the previous recipe before continuing. need to quit all timers.
-        await recipe.end()
+        await recipe.quit()
 
         // update the store
         store = await setRedisStore({ recipe: payload })
@@ -223,6 +229,9 @@ const init = async () => {
         // Send default time to frontend
         let t = '00:00:00'
         io.emit('time', { totalTime: t, stepTime: t, remainingTime: t })
+
+        // Clean up temp values that are not part of a completed recipe
+        removeIncompleteTemps()
 
         await backup()
       }
@@ -274,7 +283,7 @@ const init = async () => {
       if (type === types.COMPLETE_STEP) {
         const { id } = action
         const nextStep = await recipe.nextStep()
-        logger.success(`Completing STEP ${id} -> ${nextStep.id}`)
+        logger.success(`Completing STEP ${id} -> ${get(nextStep, 'id', 'complete')}`)
         io.emit('update recipe from server', recipe.value) // value is updated in the nextStep function
 
         await backup()
@@ -289,6 +298,12 @@ const init = async () => {
         io.emit('update recipe from server', newRecipe)
 
         await backup()
+      }
+      
+      /** SYNC THE REDUX SNACKBARS WITH SERVER STATE */
+      if (type.includes('SNACKBAR')) {
+        io.emit('set snackbars', payload)
+        store = await setRedisStore({ snackbars: payload })
       }
     })
   })

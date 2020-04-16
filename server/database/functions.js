@@ -65,7 +65,7 @@ module.exports.bootstrapDatabase = () => {
       if (!(await client.existsAsync('temps'))) await client.setAsync('temps', JSON.stringify({ temp1: 0.0, temp2: 0.0, temp3: 0.0 }))
       if (!(await client.existsAsync('time'))) await client.setAsync('time', JSON.stringify({ totalTime: 0, stepTime: 0, remainingTime: 0 }))
       client.quit()
-      resolve('Databases bootsrapped successfully!')
+      resolve('Databases bootstrapped successfully!')
     } catch (error) {
       logger.error(error)
       reject(error)
@@ -73,41 +73,41 @@ module.exports.bootstrapDatabase = () => {
   })
 }
 
-const removeStaleTimeData = () => {
-  r.connect({db: 'brewery'}).then(conn => {
-    r.table('temperatures')
-      .between([false, r.minval], [false, moment().subtract(1, 'day').unix()], { index: 'complete_time' })
-      .delete()
-      .run(conn)
-      .finally(results => {
-        conn.close()
-      })
-  })
+const removeStaleTimeData = async () => {
+  let conn = await r.connect({db: 'brewery'})
+  await r.table('temperatures')
+    .between([false, r.minval], [false, moment().subtract(1, 'day').unix()], { index: 'complete_time' })
+    .delete()
+    .run(conn)
+    .finally(() => {
+      conn.close()
+    })
+  return
 }
 
-const completeTimeData = (recipeId) => {
-  r.connect({db: 'brewery'}).then(conn => {
-    r.table('temperatures')
-      .between([recipeId, false, r.minval], [recipeId, false, r.maxval], { index: 'recipe_complete_time' })
-      .update({ complete: true })
-      .run(conn)
-      .finally(() => {
-        conn.close()
-      })
-  })
+module.exports.completeRecipeTemps = async (recipeId) => {
+  let conn = await r.connect({db: 'brewery'})
+  await r.table('temperatures')
+    .between([recipeId, false, r.minval], [recipeId, false, r.maxval], { index: 'recipe_complete_time' })
+    .update({ complete: true })
+    .run(conn)
+    .finally(() => {
+      conn.close()
+    })
+  return
 }
 
-const removeIncompleteTemps = () => {
+module.exports.removeIncompleteTemps = async () => {
   // remove any temperatures from the database that are not complete
-  r.connect({db: 'brewery'}).then(conn => {
-    r.table('temperatures')
-      .between([false, r.minval], [false, r.maxval], { index: 'complete_time' })
-      .delete()
-      .run(conn)
-      .finally(() => {
-        conn.close()
-      })
-  })
+  let conn = await r.connect({db: 'brewery'})
+  await r.table('temperatures')
+    .between([false, r.minval], [false, r.maxval], { index: 'complete_time' })
+    .delete()
+    .run(conn)
+    .finally(() => {
+      conn.close()
+    })
+  return
 }
 
 const insertTime = (options) => {

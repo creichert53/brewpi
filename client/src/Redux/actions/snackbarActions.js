@@ -1,26 +1,46 @@
-export const ENQUEUE_SNACKBAR = 'ENQUEUE_SNACKBAR';
-export const CLOSE_SNACKBAR = 'CLOSE_SNACKBAR';
-export const REMOVE_SNACKBAR = 'REMOVE_SNACKBAR';
+import {
+  ENQUEUE_SNACKBAR,
+  CLOSE_SNACKBAR,
+  REMOVE_SNACKBAR
+} from '../types'
+
+import { cloneDeep, isEqual } from 'lodash'
 
 export const enqueueSnackbar = (notification) => {
-  const key = notification.options && notification.options.key;
+  return (dispatch, getState) => {
+    const key = notification.options && notification.options.key
+    const snackbars = cloneDeep(getState().snackbars)
+    dispatch({
+      type: ENQUEUE_SNACKBAR,
+      payload: [
+        ...snackbars,
+        {
+          ...notification,
+          key: key || new Date().getTime() + Math.random()
+        }
+      ]
+    })
+  }
+}
 
-  return {
-    type: ENQUEUE_SNACKBAR,
-    notification: {
-      ...notification,
-      key: key || new Date().getTime() + Math.random(),
-    },
-  };
-};
+export const closeSnackbar = key => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: CLOSE_SNACKBAR,
+      payload: cloneDeep(getState().snackbars).map(sb => (
+        (!key || isEqual(key, sb.key))
+          ? { ...sb, dismissed: true }
+          : { ...sb }
+      ))
+    })
+  }
+}
 
-export const closeSnackbar = key => ({
-  type: CLOSE_SNACKBAR,
-  dismissAll: !key, // dismiss all if no key has been defined
-  key,
-});
-
-export const removeSnackbar = key => ({
-  type: REMOVE_SNACKBAR,
-  key,
-});
+export const removeSnackbar = key => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: REMOVE_SNACKBAR,
+      payload: key ? cloneDeep(getState().snackbars).filter(sb => !isEqual(sb.key, key)) : []
+    })
+  }
+}

@@ -1,24 +1,30 @@
 /** RECIPE **/
-module.exports.NEW_RECIPE = 'server/NEW_RECIPE'
-module.exports.COMPLETE_STEP = 'server/COMPLETE_STEP'
-module.exports.COMPLETE_TODO = 'server/COMPLETE_TODO'
-module.exports.START_BREW = 'server/START_BREW'
-module.exports.UPDATE_RECIPE = 'UPDATE_RECIPE'
+export const NEW_RECIPE = 'server/NEW_RECIPE'
+export const COMPLETE_STEP = 'server/COMPLETE_STEP'
+export const COMPLETE_TODO = 'server/COMPLETE_TODO'
+export const START_BREW = 'server/START_BREW'
+export const UPDATE_RECIPE = 'UPDATE_RECIPE'
 
 /** SETTINGS **/
-module.exports.HEATER_SETTINGS = 'HEATER_SETTINGS'
-module.exports.TEMP_SETTINGS = 'TEMP_SETTINGS'
-module.exports.THERMISTOR_SETTINGS = 'THERMISTOR_SETTINGS'
-module.exports.SETTINGS = 'server/SETTINGS'
-module.exports.CHART_WINDOW = 'server/CHART_WINDOW'
+export const HEATER_SETTINGS = 'HEATER_SETTINGS'
+export const TEMP_SETTINGS = 'TEMP_SETTINGS'
+export const THERMISTOR_SETTINGS = 'THERMISTOR_SETTINGS'
+export const SETTINGS = 'server/SETTINGS'
+export const CHART_WINDOW = 'server/CHART_WINDOW'
 
-module.exports.UPDATE_TEMPERATURE = 'UPDATE_TEMPERATURE'
+export const UPDATE_TEMPERATURE = 'UPDATE_TEMPERATURE'
 
-module.exports.UPDATE_TEMPERATURE_ARRAY = 'UPDATE_TEMPERATURE_ARRAY'
+export const UPDATE_TEMPERATURE_ARRAY = 'UPDATE_TEMPERATURE_ARRAY'
 
-module.exports.UPDATE_TIME = 'UPDATE_TIME'
+export const UPDATE_TIME = 'UPDATE_TIME'
 
-module.exports.UPDATE_OUTPUT = 'server/UPDATE_OUTPUT'
-module.exports.UPDATE_LIVE_OUTPUT = 'UPDATE_LIVE_OUTPUT'
+export const UPDATE_OUTPUT = 'server/UPDATE_OUTPUT'
+export const UPDATE_LIVE_OUTPUT = 'UPDATE_LIVE_OUTPUT'
 
-module.exports.UPDATE_ELEMENTS = 'UPDATE_ELEMENTS'
+export const UPDATE_ELEMENTS = 'UPDATE_ELEMENTS'
+
+/** SNACKBAR **/
+export const ENQUEUE_SNACKBAR = 'server/ENQUEUE_SNACKBAR'
+export const CLOSE_SNACKBAR = 'server/CLOSE_SNACKBAR'
+export const REMOVE_SNACKBAR = 'server/REMOVE_SNACKBAR'
+export const UPDATE_SNACKBARS = 'UPDATE_SNACKBARS'

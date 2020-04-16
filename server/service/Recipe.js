@@ -176,6 +176,7 @@ class Recipe extends EventEmitter {
         temps.recipeId = this.#recipeId // for tracking purposes keep the recipe id with the temp datapoint
         temps.unix = moment().tz('America/New_York').unix() // add unix timestamp
         temps.timestamp = moment().tz('America/New_York').format() // add a utc timestamp with time zone
+        temps.complete = false
         await this.#redis.rpushAsync(['temp_array', JSON.stringify(temps)]) // append the temps object
         const llen = await this.#redis.llenAsync('temp_array') // array length
         if (llen > 43200) // 12 hrs in seconds at 1 second intervals
@@ -610,25 +611,24 @@ class Boil extends Step {
   }, this.#boilInterval, { aligned: true, immediate: false })
 
   async start() {
-    this.parent.parent.start.call(this)
+    this.parent.start.call(this)
     this.#start = true
   }
 
   async stop() {
-    this.parent.parent.stop.call(this)
+    this.parent.stop.call(this)
     this.#heater.clear()
   }
 
   checkComplete() {
-    // Remaining time is updated every second
-    if (this.stepTime.value() > 0 && this.remainingTime.value() <= 0) {
+    if (get(this.step, 'stepTime', 0) > 0 && this.stepTime.value() > 0 && this.remainingTime.value() <= 0) {
       return true
     } else {
       return false
     }
   }
 }
-Heat.prototype.parent = Step.prototype
+Boil.prototype.parent = Step.prototype
 
 // ..######..##.....##.####.##.......##......
 // .##....##.##.....##..##..##.......##......

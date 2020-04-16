@@ -1,6 +1,7 @@
 const r = require('rethinkdb')
 const redis = require('redis')
 const traverse = require('traverse')
+const moment = require('moment')
 const Promise = require('bluebird')
 const { cloneDeep, set, meanBy } = require('lodash')
 const { Time } = require('./Recipe')
@@ -12,10 +13,12 @@ Promise.promisifyAll(redis.RedisClient.prototype)
  * Take the temporary in-memory store and back it up to disk
  */
 module.exports.dbBackup = async () => {
+  let start = moment()
   let client = redis.createClient()
   let store = JSON.parse(await client.getAsync('store'))
   let time = JSON.parse(await client.getAsync('time'))
   let temperatures = JSON.parse(await client.getAsync('temps'))
+  let temp_array = (await client.lrangeAsync('temp_array', -(60 * 10), -1)).map(JSON.parse) // backup the last 10 minutes of temp values
   let conn = await r.connect({db: 'brewery'})
   let changes = await r.table('store').update({
     ...cloneDeep(store),
@@ -24,10 +27,11 @@ module.exports.dbBackup = async () => {
   }, {
     returnChanges: true
   }).run(conn)
+  await r.table('temperatures').insert(temp_array, { conflict: 'replace' }).run(conn)
   conn.close()
   client.quit()
   changes.replaced > 0
-    ? logger.success('Database backup successful!')
+    ? logger.success(`Database backup successful! [${moment().diff(start,'milliseconds')} ms]`)
     : logger.warn('Database backup attempted. Nothing save to disk.')
 }
 
